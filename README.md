@@ -1,23 +1,14 @@
-# LLM + MCP + RAG
+# MAXLAW - Intelligent Legal Knowledge QA System
 
-## 目标
+## Project Introduction
 
-- **Augmented LLM** (Chat + MCP + RAG)
-- 不依赖框架
-    - LangChain, LlamaIndex, CrewAI, AutoGen
-- **MCP**
-    - 支持配置多个MCP Serves
-- **RAG** 极度简化板
-    - 从知识中检索出有关信息，注入到上下文
-- **任务**
-   - 阅读网页 → 整理一份总结 → 保存到文件
-   - 本地文档 → 查询相关资料 → 注入上下文
+MAXLAW is an intelligent legal knowledge question-answering system based on large language models, integrating the following key technologies:
 
-## **The augmented LLM**
+- **Enhanced LLM** (LLM + MCP + RAG) - Improves the answering capability of large language models through knowledge retrieval
+- **MCP Tool Integration** - Configurable with multiple MCP Servers to extend model functionality
+- **Legal Knowledge RAG** - Retrieval-augmented generation system for the legal domain, providing accurate legal knowledge consultation
 
-- [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents)
-
-![image.png](./images/image.png)
+## System Architecture
 
 ```mermaid
 classDiagram
@@ -74,49 +65,75 @@ classDiagram
     VectorStore --> VectorStoreItem : contains
 ```
 
-## **依赖**
+## Features
 
+- **Legal Knowledge Base Integration**: Includes knowledge from multiple legal domains such as civil code, company law, contract law, labor law, and intellectual property
+- **Intelligent Retrieval**: Automatically retrieves relevant legal provisions and cases from the knowledge base, providing accurate legal basis
+- **Web Interface**: Intuitive and user-friendly interface with markdown format answer display
+
+## Planned Future Features
+
+- **Multi-Session Management**: Support for multiple chat sessions to handle different legal questions simultaneously
+- **Chat History**: Save and recall previous conversations
+- **Model Selection**: Dropdown interface to select different language models from various providers:
+  - OpenAI models (GPT-3.5, GPT-4, etc.)
+  - HuggingFace models (Llama, Mistral, etc.)
+  - Local models via MCP integration
+- **Custom Knowledge Base Management**: Interface for uploading and managing custom legal documents
+
+## Quick Start
+
+### Requirements
+- Node.js v18+
+- npm or pnpm
+
+### Installation
 ```bash
-git clone git@github.com:KelvinQiu802/ts-node-esm-template.git
+# Clone repository
+git clone https://github.com/MoreClosersy/MAXLAW.git
+cd MAXLAW
+
+# Install dependencies
 pnpm install
-pnpm add dotenv openai @modelcontextprotocol/sdk chalk**
+
+# Build the project
+pnpm run build
+
+# Start development server
+pnpm run dev
+
+# Or start production server
+pnpm start
 ```
 
-## LLM
+### Configuration
+Create a `.env` file in the project root directory and configure the following environment variables:
+```
+OPENAI_API_KEY=your_openai_api_key
+HUGGINGFACE_API_KEY=your_huggingface_api_key
+```
 
-- [OpenAI API](https://platform.openai.com/docs/api-reference/chat)
+## Knowledge Base
 
-## MCP
-
-- [MCP 架构](https://modelcontextprotocol.io/docs/concepts/architecture)
-- [MCP Client](https://modelcontextprotocol.io/quickstart/client)
-- [Fetch MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/fetch)
-- [Filesystem MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
-
-## RAG
+The current system integrates knowledge from the following legal domains:
 
 - [Retrieval Augmented Generation](https://scriv.ai/guides/retrieval-augmented-generation-overview/)
-    - 译文: https://www.yuque.com/serviceup/misc/cn-retrieval-augmented-generation-overview
-- 各种Loaders: https://python.langchain.com/docs/integrations/document_loaders/
-- [硅基流动](https://cloud.siliconflow.cn/models)
-    - 邀请码： **x771DtAF**
-- [json数据](https://jsonplaceholder.typicode.com/)
 
-## 向量
+- Loaders: https://python.langchain.com/docs/integrations/document_loaders/
+- HuggingFace: 
+  - [Embedding Models](https://huggingface.co/models)
+  - Used for embedding generation and potentially for self-hosted LLMs
 
-- 维度
-- 模长
-- 点乘 Dot Product
-    - 对应位置元素的积，求和
-- 余弦相似度 cos
-    - 1 → 方向完全一致
-    - 0 → 垂直
-    - -1 → 完全想法
+- OpenAI:
+  - [OpenAI API Documentation](https://platform.openai.com/docs/api-reference)
+  - [OpenAI Embedding Models](https://platform.openai.com/docs/guides/embeddings)
+  - [Chat Completions API](https://platform.openai.com/docs/api-reference/chat)
+  - Used for generating text embeddings and powering the conversational AI
 
-![image.png](./images/image1.png)
+## Technology Stack
 
-![image.png](./images/image2.png)
-
-![image.png](./images/image3.png)
-
-![image.png](./images/image4.png)
+- **Frontend**: HTML, CSS, JavaScript/React
+- **Backend**: Node.js, TypeScript
+- **RAG Implementation**: OpenAI Embedding API + Vector Retrieval
+- **LLM Integration**: OpenAI API
+- **MCP Tools**: Model Context Protocol
