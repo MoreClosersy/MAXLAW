@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import 'dotenv/config'
-import { logTitle } from "./utils";
+import { logTitle } from "./utils.js";
 
 export interface ToolCall {
     id: string;
@@ -44,16 +44,16 @@ export default class ChatOpenAI {
         logTitle('RESPONSE');
         for await (const chunk of stream) {
             const delta = chunk.choices[0].delta;
-            // 处理普通Content
+            // Handle regular Content
             if (delta.content) {
                 const contentChunk = chunk.choices[0].delta.content || "";
                 content += contentChunk;
                 process.stdout.write(contentChunk);
             }
-            // 处理ToolCall
+            // Handle ToolCall
             if (delta.tool_calls) {
                 for (const toolCallChunk of delta.tool_calls) {
-                    // 第一次要创建一个toolCall
+                    // Create a new toolCall for the first time
                     if (toolCalls.length <= toolCallChunk.index) {
                         toolCalls.push({ id: '', function: { name: '', arguments: '' } });
                     }
@@ -77,6 +77,10 @@ export default class ChatOpenAI {
             content: toolOutput,
             tool_call_id: toolCallId
         });
+    }
+
+    public addSystemMessage(message: string) {
+        this.messages.push({ role: "system", content: message });
     }
 
     private getToolsDefinition(): OpenAI.Chat.Completions.ChatCompletionTool[] {

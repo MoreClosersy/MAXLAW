@@ -1,6 +1,6 @@
-import MCPClient from "./MCPClient";
-import ChatOpenAI from "./ChatOpenAI";
-import { logTitle } from "./utils";
+import MCPClient from "./MCPClient.js";
+import ChatOpenAI from "./ChatOpenAI.js";
+import { logTitle } from "./utils.js";
 
 export default class Agent {
     private mcpClients: MCPClient[];
@@ -31,9 +31,13 @@ export default class Agent {
         }
     }
 
-    async invoke(prompt: string) {
+    async invoke(prompt: string): Promise<string> {
         if (!this.llm) throw new Error('Agent not initialized');
+        
+        // Get response from LLM
         let response = await this.llm.chat(prompt);
+        
+        // Handle tool calls
         while (true) {
             if (response.toolCalls.length > 0) {
                 for (const toolCall of response.toolCalls) {
@@ -49,11 +53,11 @@ export default class Agent {
                         this.llm.appendToolResult(toolCall.id, 'Tool not found');
                     }
                 }
-                // 工具调用后,继续对话
+                // Continue the conversation after tool calls
                 response = await this.llm.chat();
                 continue
             }
-            // 没有工具调用,结束对话
+            // No more tool calls, end conversation and return complete content
             await this.close();
             return response.content;
         }
