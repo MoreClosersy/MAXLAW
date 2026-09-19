@@ -1,0 +1,69 @@
+{"id": "lookup-01", "category": "article_lookup", "question": "民法典第577条规定了什么？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 577, "snippet": "当事人一方不履行合同义务或者履行合同义务不符合约"}]}
+{"id": "lookup-02", "category": "article_lookup", "question": "公司法第二十三条的内容是什么？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 23, "snippet": "公司股东滥用公司法人独立地位和股东有限责任，逃避"}]}
+{"id": "lookup-03", "category": "article_lookup", "question": "民法典第一千零七十七条是怎么规定的？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 1077, "snippet": "自婚姻登记机关收到离婚登记申请之日起三十日内，任"}]}
+{"id": "lookup-04", "category": "article_lookup", "question": "公司法第二百六十六条规定了什么？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 266, "snippet": "本法自2024年7月1日起施行。 本法施行前已登"}]}
+{"id": "sem-01", "category": "semantic", "question": "网上买的东西在快递途中被烧毁了，损失由谁承担？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 604, "snippet": "标的物毁损、灭失的风险，在标的物交付之前由出卖人"}]}
+{"id": "sem-02", "category": "semantic", "question": "不满八周岁的孩子自己签的合同有效吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 20, "snippet": "不满八周岁的未成年人为无民事行为能力人，由其法定"}]}
+{"id": "sem-03", "category": "semantic", "question": "别人欠我钱一直不还，过了多久法院就不保护了？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 188, "snippet": "向人民法院请求保护民事权利的诉讼时效期间为三年。"}]}
+{"id": "sem-04", "category": "semantic", "question": "协议离婚去民政局申请之后，要等多久才能拿到离婚证？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 1077, "snippet": "自婚姻登记机关收到离婚登记申请之日起三十日内，任"}]}
+{"id": "sem-05", "category": "semantic", "question": "有人在楼上往下扔东西砸伤了我，但查不出具体是谁扔的，怎么办？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 1254, "snippet": "禁止从建筑物中抛掷物品。从建筑物中抛掷物品或者从"}]}
+{"id": "sem-06", "category": "semantic", "question": "承租人能不能把租来的房子转租给第三人？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 716, "snippet": "承租人经出租人同意，可以将租赁物转租给第三人。承"}]}
+{"id": "sem-07", "category": "semantic", "question": "被人侵害造成严重精神痛苦，可以要求精神损害赔偿吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 1183, "snippet": "侵害自然人人身权益造成严重精神损害的，被侵权人有"}]}
+{"id": "sem-08", "category": "semantic", "question": "股东能不能查阅公司的会计账簿？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 57, "snippet": "股东有权查阅、复制公司章程、股东名册、股东会会议"}]}
+{"id": "sem-09", "category": "semantic", "question": "股东把公司当成提款机逃避债务，债权人能不能直接找股东要？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 23, "snippet": "公司股东滥用公司法人独立地位和股东有限责任，逃避"}]}
+{"id": "sem-10", "category": "semantic", "question": "保证合同里没有写保证方式，保证人按什么承担责任？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 686, "snippet": "保证的方式包括一般保证和连带责任保证。 当事人在"}]}
+{"id": "sem-11", "category": "semantic", "question": "公司的法定代表人可以由谁来担任？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 10, "snippet": "公司的法定代表人按照公司章程的规定，由代表公司执"}]}
+{"id": "sem-12", "category": "semantic", "question": "设立居住权需要办理登记吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 368, "snippet": "居住权无偿设立，但是当事人另有约定的除外。设立居"}]}
+{"id": "sem-13", "category": "semantic", "question": "从没有处分权的人手里买东西，什么情况下能取得所有权？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 311, "snippet": "无处分权人将不动产或者动产转让给受让人的，所有权"}]}
+{"id": "sem-14", "category": "semantic", "question": "限制民事行为能力人实施的民事法律行为，效力怎么认定？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 145, "snippet": "限制民事行为能力人实施的纯获利益的民事法律行为或"}, {"source": "民法典.md", "articleNo": 19, "snippet": "八周岁以上的未成年人为限制民事行为能力人，实施民"}]}
+{"id": "sem-15", "category": "semantic", "question": "没有代理权却以别人名义签合同，对方有理由相信他有代理权，合同有效吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 172, "snippet": "行为人没有代理权、超越代理权或者代理权终止后，仍"}]}
+{"id": "sem-16", "category": "semantic", "question": "悬赏寻找失物，事后反悔不付报酬，可以要求支付吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 499, "snippet": "悬赏人以公开方式声明对完成特定行为的人支付报酬的"}]}
+{"id": "sem-17", "category": "semantic", "question": "股东会决议内容违反了公司章程，股东能怎么救济？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 26, "snippet": "公司股东会、董事会的会议召集程序、表决方式违反法"}]}
+{"id": "sem-18", "category": "semantic", "question": "股份有限公司的股东能不能把股份转让给股东以外的人？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 157, "snippet": "股份有限公司的股东持有的股份可以向其他股东转让，"}]}
+{"id": "sem-19", "category": "semantic", "question": "股东会都有哪些职权？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 59, "snippet": "股东会行使下列职权： （一）选举和更换董事、监事"}]}
+{"id": "sem-20", "category": "semantic", "question": "法定代表人以公司名义从事民事活动，法律后果由谁承担？", "expectAbstain": false, "expected": [{"source": "公司法.md", "articleNo": 11, "snippet": "法定代表人以公司名义从事的民事活动，其法律后果由"}, {"source": "民法典.md", "articleNo": 61, "snippet": "依照法律或者法人章程的规定，代表法人从事民事活动"}]}
+{"id": "sem-21", "category": "semantic", "question": "租赁物在承租人按照租赁合同占有期限内发生所有权变动的，租赁合同还有效吗？", "expectAbstain": false, "expected": [{"source": "民法典.md", "articleNo": 725, "snippet": "租赁物在承租人按照租赁合同占有期限内发生所有权变"}]}
+{"id":"near-01","category":"near_duplicate","question":"行纪合同这一章没有规定的，参照适用什么合同的规定？","expectAbstain":false,"expected":[{"source":"民法典.md","articleNo":960,"snippet":"本章没有规定的，参照适用委托合同的有关规定。"}]}
+{"id":"near-02","category":"near_duplicate","question":"中介合同这一章没有规定的，参照适用什么合同的规定？","expectAbstain":false,"expected":[{"source":"民法典.md","articleNo":966,"snippet":"本章没有规定的，参照适用委托合同的有关规定。"}]}
+{"id":"ood-01","category":"out_of_domain","question":"劳动合同被违法解除，经济补偿金该怎么算？","expectAbstain":true,"law":"劳动合同法","keyTerms":["经济补偿金","违法解除"],"oodKind":"legal_adjacent"}
+{"id":"ood-02","category":"out_of_domain","question":"专利申请需要满足什么创造性标准？","expectAbstain":true,"law":"专利法","keyTerms":["创造性","专利申请"],"oodKind":"legal_adjacent"}
+{"id":"ood-03","category":"out_of_domain","question":"醉酒驾驶机动车会被怎么处罚？","expectAbstain":true,"law":"道路交通安全法","keyTerms":["醉酒驾驶","机动车"],"oodKind":"legal_adjacent"}
+{"id":"ood-04","category":"out_of_domain","question":"故意伤害致人重伤的，判几年？","expectAbstain":true,"law":"刑法","keyTerms":["故意伤害","重伤"],"oodKind":"legal_adjacent"}
+{"id":"ood-05","category":"out_of_domain","question":"试用期最长可以约定多久？","expectAbstain":true,"law":"劳动合同法","keyTerms":["试用期"],"oodKind":"legal_adjacent"}
+{"id":"ood-06","category":"out_of_domain","question":"用人单位安排周末加班，加班费按什么标准支付？","expectAbstain":true,"law":"劳动法","keyTerms":["加班费","延长工作时间"],"oodKind":"legal_adjacent"}
+{"id":"ood-07","category":"out_of_domain","question":"未签订书面劳动合同，劳动者可以主张二倍工资吗？","expectAbstain":true,"law":"劳动合同法","keyTerms":["二倍工资","书面劳动合同"],"oodKind":"legal_adjacent"}
+{"id":"ood-08","category":"out_of_domain","question":"女职工在孕期被辞退，可以要求继续履行劳动合同吗？","expectAbstain":true,"law":"劳动合同法","keyTerms":["孕期","女职工"],"oodKind":"legal_adjacent"}
+{"id":"ood-09","category":"out_of_domain","question":"劳动争议申请仲裁的时效期间是多久？","expectAbstain":true,"law":"劳动争议调解仲裁法","keyTerms":["仲裁时效","劳动争议"],"oodKind":"legal_adjacent"}
+{"id":"ood-10","category":"out_of_domain","question":"盗窃他人财物数额较大的，一般判多久？","expectAbstain":true,"law":"刑法","keyTerms":["盗窃","数额较大"],"oodKind":"legal_adjacent"}
+{"id":"ood-11","category":"out_of_domain","question":"正当防卫明显超过必要限度造成损害的，要负刑事责任吗？","expectAbstain":true,"law":"刑法","keyTerms":["正当防卫","必要限度"],"oodKind":"legal_adjacent"}
+{"id":"ood-12","category":"out_of_domain","question":"交通肇事逃逸致人死亡的，法定刑是多少？","expectAbstain":true,"law":"刑法","keyTerms":["交通肇事","逃逸"],"oodKind":"legal_adjacent"}
+{"id":"ood-13","category":"out_of_domain","question":"取保候审的适用条件是什么？","expectAbstain":true,"law":"刑事诉讼法","keyTerms":["取保候审"],"oodKind":"legal_adjacent"}
+{"id":"ood-14","category":"out_of_domain","question":"诈骗公私财物数额巨大的，如何量刑？","expectAbstain":true,"law":"刑法","keyTerms":["诈骗","量刑"],"oodKind":"legal_adjacent"}
+{"id":"ood-15","category":"out_of_domain","question":"商标注册申请被驳回后，可以在多长时间内申请复审？","expectAbstain":true,"law":"商标法","keyTerms":["商标","复审"],"oodKind":"legal_adjacent"}
+{"id":"ood-16","category":"out_of_domain","question":"发明专利权的保护期限是多少年？","expectAbstain":true,"law":"专利法","keyTerms":["保护期限","专利权"],"oodKind":"legal_adjacent"}
+{"id":"ood-17","category":"out_of_domain","question":"职务发明的专利权归单位还是归发明人？","expectAbstain":true,"law":"专利法","keyTerms":["职务发明","专利权"],"oodKind":"legal_adjacent"}
+{"id":"ood-18","category":"out_of_domain","question":"著作权保护期是作者终生加多少年？","expectAbstain":true,"law":"著作权法","keyTerms":["著作权","保护期"],"oodKind":"legal_adjacent"}
+{"id":"ood-19","category":"out_of_domain","question":"不服一审民事判决，上诉期是多少天？","expectAbstain":true,"law":"民事诉讼法","keyTerms":["上诉期","民事判决"],"oodKind":"legal_adjacent"}
+{"id":"ood-20","category":"out_of_domain","question":"申请强制执行的期限是多久？","expectAbstain":true,"law":"民事诉讼法","keyTerms":["强制执行","申请执行"],"oodKind":"legal_adjacent"}
+{"id":"ood-21","category":"out_of_domain","question":"民事诉讼中申请财产保全需要提供担保吗？","expectAbstain":true,"law":"民事诉讼法","keyTerms":["财产保全","担保"],"oodKind":"legal_adjacent"}
+{"id":"ood-22","category":"out_of_domain","question":"对行政处罚决定不服，申请行政复议的期限是多久？","expectAbstain":true,"law":"行政复议法","keyTerms":["行政复议","行政处罚"],"oodKind":"legal_adjacent"}
+{"id":"ood-23","category":"out_of_domain","question":"行政机关作出责令停产停业的处罚前，当事人有权要求听证吗？","expectAbstain":true,"law":"行政处罚法","keyTerms":["听证","停产停业"],"oodKind":"legal_adjacent"}
+{"id":"ood-24","category":"out_of_domain","question":"行政拘留最长可以拘留多少天？","expectAbstain":true,"law":"治安管理处罚法","keyTerms":["行政拘留"],"oodKind":"legal_adjacent"}
+{"id":"ood-25","category":"out_of_domain","question":"个人所得税的综合所得适用什么税率？","expectAbstain":true,"law":"个人所得税法","keyTerms":["个人所得税","综合所得"],"oodKind":"legal_adjacent"}
+{"id":"ood-26","category":"out_of_domain","question":"增值税小规模纳税人的征收率是多少？","expectAbstain":true,"law":"增值税暂行条例","keyTerms":["增值税","小规模纳税人"],"oodKind":"legal_adjacent"}
+{"id":"ood-27","category":"out_of_domain","question":"企业虚开增值税专用发票要承担什么法律责任？","expectAbstain":true,"law":"刑法","keyTerms":["虚开","增值税专用发票"],"oodKind":"legal_adjacent"}
+{"id":"ood-28","category":"out_of_domain","question":"网购商品七天无理由退货的起算时间怎么算？","expectAbstain":true,"law":"消费者权益保护法","keyTerms":["无理由退货","七日"],"oodKind":"legal_adjacent"}
+{"id":"ood-29","category":"out_of_domain","question":"经营者欺诈消费者的，惩罚性赔偿是多少倍？","expectAbstain":true,"law":"消费者权益保护法","keyTerms":["欺诈","惩罚性赔偿"],"oodKind":"legal_adjacent"}
+{"id":"ood-30","category":"out_of_domain","question":"买到不符合食品安全标准的食品，可以要求十倍赔偿吗？","expectAbstain":true,"law":"食品安全法","keyTerms":["食品安全","十倍赔偿"],"oodKind":"legal_adjacent"}
+{"id":"ood-31","category":"out_of_domain","question":"闯红灯被电子眼拍到，罚款和记分标准是什么？","expectAbstain":true,"law":"道路交通安全法","keyTerms":["记分","闯红灯"],"oodKind":"legal_adjacent"}
+{"id":"ood-32","category":"out_of_domain","question":"发生交通事故后逃逸，驾驶证会被怎么处理？","expectAbstain":true,"law":"道路交通安全法","keyTerms":["驾驶证","交通事故"],"oodKind":"legal_adjacent"}
+{"id":"ood-33","category":"out_of_domain","question":"公司不能清偿到期债务，债权人申请破产需要满足什么条件？","expectAbstain":true,"law":"企业破产法","keyTerms":["破产","不能清偿到期债务"],"oodKind":"legal_adjacent"}
+{"id":"ood-34","category":"out_of_domain","question":"内幕交易要承担什么法律责任？","expectAbstain":true,"law":"证券法","keyTerms":["内幕交易"],"oodKind":"legal_adjacent"}
+{"id":"ood-35","category":"out_of_domain","question":"投保人违反如实告知义务，保险人可以解除合同吗？","expectAbstain":true,"law":"保险法","keyTerms":["如实告知","保险人"],"oodKind":"legal_adjacent"}
+{"id":"ood-36","category":"out_of_domain","question":"企业超标排放污染物会被处以什么处罚？","expectAbstain":true,"law":"环境保护法","keyTerms":["排放污染物","超标"],"oodKind":"legal_adjacent"}
+{"id":"ood-37","category":"out_of_domain","question":"违法收集个人信息，最高可以处多少罚款？","expectAbstain":true,"law":"个人信息保护法","keyTerms":["个人信息"],"oodKind":"legal_adjacent"}
+{"id":"ood-38","category":"out_of_domain","question":"劳动者与用人单位达成工伤赔偿私了协议后，还能反悔吗？","expectAbstain":true,"law":"工伤保险条例","keyTerms":["工伤"],"oodKind":"legal_adjacent"}
+{"id":"ood-39","category":"out_of_domain","question":"明天北京的天气怎么样？","expectAbstain":true,"law":"—","keyTerms":["天气"],"oodKind":"unrelated"}
+{"id":"ood-40","category":"out_of_domain","question":"番茄炒蛋怎么做才好吃？","expectAbstain":true,"law":"—","keyTerms":["番茄","炒蛋"],"oodKind":"unrelated"}
+{"id":"ood-41","category":"out_of_domain","question":"TypeScript 里怎么把一个数组去重？","expectAbstain":true,"law":"—","keyTerms":["TypeScript","数组"],"oodKind":"unrelated"}
+{"id":"ood-42","category":"out_of_domain","question":"世界上最高的山峰是哪座？","expectAbstain":true,"law":"—","keyTerms":["山峰"],"oodKind":"unrelated"}

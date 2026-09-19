@@ -22,9 +22,25 @@ pids/
 dist/
 build/
 
+# Agent / tooling scratch
+.claude/
+
+# Generated model output
+output/
+
+# Python（语料构建脚本的字节码缓存）
+__pycache__/
+*.pyc
+
 # Cache
+cache/
 .cache/
 .npm/
+
+# 评测中间产物：答案与判分的缓存（派生数据、与机器和模型绑定，不入库）
+# 报告 eval/faithfulness-report.json 是**要**入库的——它是结论，缓存只是省钱的中间态
+eval/.answers-cache.json
+eval/.judge-cache.json
 
 # Editor directories and files
 .idea/

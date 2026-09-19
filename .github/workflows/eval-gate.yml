@@ -1,0 +1,84 @@
+# 检索质量门禁：指标低于阈值就 fail build。
+#
+# 只闸**确定性**的检索指标，不带 --generate：生成指标有随机性、还要花 LLM 的钱，
+# 不适合做门禁（见 README「What the numbers do not say」）。
+#
+# ⚠️ 拒答判官**刻意不进这个门禁**（`pnpm eval:abstention` 不在这里跑）。这是决定，不是遗漏：
+#   1. 它要 OPENAI_API_KEY。这个 job 现在热缓存下**一个密钥都不需要**，加进去就没了。
+#   2. 它有采样噪声。门禁的判据必须是"同样的输入必然得到同样的结论"，
+#      否则失败的 build 无法复现，人就会开始习惯性重跑——门禁也就死了。
+#   3. 它花钱。push 路径上的花费会随提交频率线性增长。
+#   将来若确实想要，正确的形态是一个单独的 workflow_dispatch 任务（带 key、手动触发、
+#   结果只归档不判定），而不是挂在这条 push 路径上。
+#
+# 索引缓存的三个要点：
+#   1. `cache/` 在 .gitignore 里（28MB 向量），所以走 actions/cache 而不是 git。
+#   2. 缓存键含 knowledge/*.md 的哈希与模型名——语料或模型一变就该重建，否则量的是旧索引。
+#   3. **缓存热时整个 job 不需要任何密钥**：语料向量和 31 条查询向量都在缓存里，
+#      eval 全程离线。只有冷缓存（改了语料/换了模型）才需要 EMBEDDING_API_KEY。
+#      注意 eval 会把查询向量也落盘，所以缓存必须**在 eval 之后**才完整。
+name: eval-gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  EMBEDDING_MODEL: BAAI/bge-base-zh-v1.5
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 恢复嵌入索引缓存
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-${{ hashFiles('knowledge/*.md') }}
+
+      # 冷缓存才建索引。热缓存时**不能**跑这条：pnpm embed 的 pruneCache() 会以
+      # 语料 chunk 为准清理缓存，把查询向量一并删掉，反而让下一步需要联网。
+      - name: 建索引（仅冷缓存）
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+        run: |
+          if [ -z "$EMBEDDING_API_KEY" ]; then
+            echo "::error::索引缓存未命中，且本 job 拿不到 EMBEDDING_API_KEY。"
+            echo "没有可信索引就没有可测量的指标——门禁不判定，直接失败（不静默跳过）。"
+            echo "fork PR 改动了 knowledge/*.md 时会走到这里，需要维护者先预热缓存。"
+            exit 1
+          fi
+          pnpm embed
+
+      - name: 评测 + 门禁
+        run: pnpm eval:gate
+
+      - name: 保存索引缓存（含查询向量）
+        if: always() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: cache
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-${{ hashFiles('knowledge/*.md') }}
+
+      - name: 存档评测报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval/report.json

@@ -1,0 +1,62 @@
+{
+  "民法典.md": {
+    "title": "中华人民共和国民法典",
+    "articles": 1260,
+    "markdownSha1": "15490dd92f0f34771388f221e1795c1bdc70abca",
+    "verifiedAt": "2026-09-18",
+    "sources": [
+      {
+        "role": "primary",
+        "name": "广州人大·新华社受权发布全文",
+        "url": "https://www.gzrd.gov.cn/xwzx/rdyw/202006/t20200602_77652025.html",
+        "rawSha256": "2755da6d3cfbae8975a97087e9d55e39158526654068d5d4aa923a115bf22523"
+      },
+      {
+        "role": "cross-check",
+        "name": "北京市人大常委会",
+        "url": "http://www.bjrd.gov.cn/zyfb/zt/13jqgrd3chybjdbtzt/1303bjtwjbg/202101/t20210111_2214501.html",
+        "rawSha256": "9e97a91e6ed7e944aadeb4827b552430d32e91ba69fc99b79b23791e857f0362"
+      }
+    ],
+    "verification": [
+      "条号连续、无缺失、无重复（1260 条）",
+      "目录 编/章/节 序列与正文归纳序列完全吻合",
+      "两个独立官方源逐条比对完全一致"
+    ],
+    "transformations": [
+      "HTML 转纯文本（未做 NFKC，保留全角标点）",
+      "半角分号 ; 规范化为全角 ；",
+      "削去末条尾部粘连的网页页脚"
+    ]
+  },
+  "公司法.md": {
+    "title": "中华人民共和国公司法",
+    "articles": 266,
+    "markdownSha1": "a47c0f763ac21c7e3338dd26e4e272ab314f504a",
+    "verifiedAt": "2026-09-18",
+    "sources": [
+      {
+        "role": "primary",
+        "name": "最高人民法院国际商事法庭",
+        "url": "https://cicc.court.gov.cn/html/1//380/385/12910.html",
+        "rawSha256": "9b6052b8f37d6ab4d9fda97fa2d141384f66f44ccd5da59bf2c73a934e86e182"
+      },
+      {
+        "role": "cross-check",
+        "name": "辽宁省高级人民法院",
+        "url": "https://tldbs.lncourt.gov.cn/article/detail/2024/01/id/7790884.shtml",
+        "rawSha256": "1db77898f7e4d95f45ad0ddd25bde7d683c3c1e4d4399f11430d1474d126baf6"
+      }
+    ],
+    "verification": [
+      "条号连续、无缺失、无重复（266 条）",
+      "目录 编/章/节 序列与正文归纳序列完全吻合",
+      "两个独立官方源逐条比对完全一致"
+    ],
+    "transformations": [
+      "HTML 转纯文本（未做 NFKC，保留全角标点）",
+      "半角分号 ; 规范化为全角 ；",
+      "削去末条尾部粘连的网页页脚"
+    ]
+  }
+}

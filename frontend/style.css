@@ -630,3 +630,82 @@ body {
   color: #2e7d32;
   border-left: 3px solid #2e7d32;
 } 
+/* 流式状态条：展示检索/工具调用进度 */
+.stream-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px 52px;
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* 拒答提示：检索不到相关条文时明确标出，避免被当成正常回答 */
+.abstained-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 引用条号列表 */
+.citation-list {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #6b7280;
+}
+.citation-list .citation-item {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  padding: 1px 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+/* 引用校验面板：全通过时一行，有问题时展开逐条原因 */
+.citation-check {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.citation-check.ok {
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
+  color: #166534;
+}
+.citation-check.warn {
+  background: #fffbeb;
+  border-left: 3px solid #d97706;
+  color: #92400e;
+}
+.citation-check-title {
+  font-weight: 600;
+}
+.citation-check-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.citation-check-list li {
+  margin-top: 2px;
+}
+.citation-check-list code {
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  font-weight: 600;
+}
+.citation-list-label {
+  margin-right: 4px;
+}
+.citation-list .citation-item[title]:not([title=""]) {
+  cursor: help;
+}

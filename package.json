@@ -5,11 +5,20 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node --experimental-specifier-resolution=node dist/server.js",
+    "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "build": "tsc",
-    "embed": "tsx src/index.ts embed",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "embed": "tsx src/embed.ts",
+    "test": "node --test --import tsx 'src/**/*.test.ts'",
+    "eval": "tsx eval/run.ts",
+    "eval:rerank": "RERANK_ENABLED=1 tsx eval/run.ts",
+    "lint:corpus": "tsx src/lintCorpus.ts",
+    "corpus:manifest": "tsx src/manifest.ts",
+    "eval:signals": "tsx eval/abstentionSignals.ts",
+        "eval:abstention": "tsx eval/abstention.ts",
+    "eval:faithfulness": "tsx eval/faithfulness.ts",
+    "eval:faithfulness:calib": "tsx eval/faithfulness.ts --calibrate --stability",
+    "eval:gate": "tsx eval/run.ts --min-hit=1.0 --min-mrr=0.862 --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0"
   },
   "keywords": [],
   "author": "",
@@ -29,13 +38,13 @@
     ]
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
     "@modelcontextprotocol/sdk": "^1.10.2",
     "chalk": "^5.4.1",
-    "chromadb": "^2.3.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.18.2",
-    "langchain": "^0.3.24",
+    "ioredis": "^6.0.0",
     "multer": "^1.4.5-lts.1",
     "openai": "^4.24.0"
   }

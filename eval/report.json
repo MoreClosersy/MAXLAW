@@ -1,0 +1,1238 @@
+{
+  "corpusVersion": 2,
+  "corpusHash": "39727cfdca37a660",
+  "totalArticles": 1526,
+  "datasetSha1": "ddfa161d6775",
+  "config": {
+    "embeddingModel": "BAAI/bge-base-zh-v1.5",
+    "embeddingDimension": 768,
+    "rerank": null,
+    "topK": 5,
+    "threshold": 0.35,
+    "generate": false,
+    "abstention": {
+      "mode": "similarity-only",
+      "judge": null
+    }
+  },
+  "generatedAt": "2026-09-19T08:28:34.975Z",
+  "metrics": [
+    {
+      "label": "article_lookup",
+      "n": 4,
+      "hasGT": true,
+      "hit1": "1.000",
+      "hit3": "1.000",
+      "hitK": "1.000",
+      "mrr": "1.000",
+      "abstainRate": "0.000"
+    },
+    {
+      "label": "semantic",
+      "n": 21,
+      "hasGT": true,
+      "hit1": "0.714",
+      "hit3": "0.905",
+      "hitK": "1.000",
+      "mrr": "0.823",
+      "abstainRate": "0.000"
+    },
+    {
+      "label": "near_duplicate",
+      "n": 2,
+      "hasGT": true,
+      "hit1": "1.000",
+      "hit3": "1.000",
+      "hitK": "1.000",
+      "mrr": "1.000",
+      "abstainRate": "0.000"
+    },
+    {
+      "label": "out_of_domain",
+      "n": 42,
+      "hasGT": false,
+      "hit1": "—",
+      "hit3": "—",
+      "hitK": "—",
+      "mrr": "—",
+      "abstainRate": "0.071"
+    },
+    {
+      "label": "整体(有 GT)",
+      "n": 27,
+      "hasGT": true,
+      "hit1": "0.778",
+      "hit3": "0.926",
+      "hitK": "1.000",
+      "mrr": "0.862",
+      "abstainRate": "0.000"
+    }
+  ],
+  "ood": {
+    "total": 42,
+    "abstainedCorrectly": 3,
+    "mode": "similarity-only"
+  },
+  "rows": [
+    {
+      "id": "lookup-01",
+      "category": "article_lookup",
+      "question": "民法典第577条规定了什么？",
+      "abstained": false,
+      "topScore": 0.6725,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#577",
+        "民法典.md#1164",
+        "民法典.md#176",
+        "民法典.md#127",
+        "民法典.md#7"
+      ]
+    },
+    {
+      "id": "lookup-02",
+      "category": "article_lookup",
+      "question": "公司法第二十三条的内容是什么？",
+      "abstained": false,
+      "topScore": 0.6708,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#23",
+        "公司法.md#232",
+        "公司法.md#226",
+        "公司法.md#233",
+        "公司法.md#225"
+      ]
+    },
+    {
+      "id": "lookup-03",
+      "category": "article_lookup",
+      "question": "民法典第一千零七十七条是怎么规定的？",
+      "abstained": false,
+      "topScore": 0.7303,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#1077",
+        "民法典.md#176",
+        "民法典.md#1164",
+        "民法典.md#1178",
+        "民法典.md#7"
+      ]
+    },
+    {
+      "id": "lookup-04",
+      "category": "article_lookup",
+      "question": "公司法第二百六十六条规定了什么？",
+      "abstained": false,
+      "topScore": 0.6892,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#266",
+        "公司法.md#16",
+        "公司法.md#66",
+        "公司法.md#1",
+        "公司法.md#226"
+      ]
+    },
+    {
+      "id": "sem-01",
+      "category": "semantic",
+      "question": "网上买的东西在快递途中被烧毁了，损失由谁承担？",
+      "abstained": false,
+      "topScore": 0.6523,
+      "reason": "answered",
+      "ranks": [
+        5
+      ],
+      "retrieved": [
+        "民法典.md#832",
+        "民法典.md#1204",
+        "民法典.md#606",
+        "民法典.md#824",
+        "民法典.md#604"
+      ]
+    },
+    {
+      "id": "sem-02",
+      "category": "semantic",
+      "question": "不满八周岁的孩子自己签的合同有效吗？",
+      "abstained": false,
+      "topScore": 0.6096,
+      "reason": "answered",
+      "ranks": [
+        4
+      ],
+      "retrieved": [
+        "民法典.md#578",
+        "民法典.md#19",
+        "民法典.md#487",
+        "民法典.md#20",
+        "民法典.md#464"
+      ]
+    },
+    {
+      "id": "sem-03",
+      "category": "semantic",
+      "question": "别人欠我钱一直不还，过了多久法院就不保护了？",
+      "abstained": false,
+      "topScore": 0.6486,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#188",
+        "民法典.md#419",
+        "民法典.md#538",
+        "民法典.md#192",
+        "民法典.md#694"
+      ]
+    },
+    {
+      "id": "sem-04",
+      "category": "semantic",
+      "question": "协议离婚去民政局申请之后，要等多久才能拿到离婚证？",
+      "abstained": false,
+      "topScore": 0.6851,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#1077",
+        "民法典.md#1078",
+        "民法典.md#1076",
+        "民法典.md#1082",
+        "民法典.md#1080"
+      ]
+    },
+    {
+      "id": "sem-05",
+      "category": "semantic",
+      "question": "有人在楼上往下扔东西砸伤了我，但查不出具体是谁扔的，怎么办？",
+      "abstained": false,
+      "topScore": 0.595,
+      "reason": "answered",
+      "ranks": [
+        3
+      ],
+      "retrieved": [
+        "民法典.md#1255",
+        "民法典.md#1253",
+        "民法典.md#1254",
+        "民法典.md#1256",
+        "民法典.md#1257"
+      ]
+    },
+    {
+      "id": "sem-06",
+      "category": "semantic",
+      "question": "承租人能不能把租来的房子转租给第三人？",
+      "abstained": false,
+      "topScore": 0.7768,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#716",
+        "民法典.md#717",
+        "民法典.md#719",
+        "民法典.md#723",
+        "民法典.md#718"
+      ]
+    },
+    {
+      "id": "sem-07",
+      "category": "semantic",
+      "question": "被人侵害造成严重精神痛苦，可以要求精神损害赔偿吗？",
+      "abstained": false,
+      "topScore": 0.7687,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#1183",
+        "民法典.md#996",
+        "民法典.md#1185",
+        "民法典.md#1179",
+        "民法典.md#1182"
+      ]
+    },
+    {
+      "id": "sem-08",
+      "category": "semantic",
+      "question": "股东能不能查阅公司的会计账簿？",
+      "abstained": false,
+      "topScore": 0.663,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#57",
+        "公司法.md#217",
+        "公司法.md#110",
+        "公司法.md#209",
+        "公司法.md#216"
+      ]
+    },
+    {
+      "id": "sem-09",
+      "category": "semantic",
+      "question": "股东把公司当成提款机逃避债务，债权人能不能直接找股东要？",
+      "abstained": false,
+      "topScore": 0.6281,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#23",
+        "公司法.md#54",
+        "公司法.md#253",
+        "公司法.md#86",
+        "公司法.md#53"
+      ]
+    },
+    {
+      "id": "sem-10",
+      "category": "semantic",
+      "question": "保证合同里没有写保证方式，保证人按什么承担责任？",
+      "abstained": false,
+      "topScore": 0.7571,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#686",
+        "民法典.md#699",
+        "民法典.md#693",
+        "民法典.md#700",
+        "民法典.md#681"
+      ]
+    },
+    {
+      "id": "sem-11",
+      "category": "semantic",
+      "question": "公司的法定代表人可以由谁来担任？",
+      "abstained": false,
+      "topScore": 0.738,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#10",
+        "公司法.md#11",
+        "民法典.md#62",
+        "民法典.md#61",
+        "公司法.md#127"
+      ]
+    },
+    {
+      "id": "sem-12",
+      "category": "semantic",
+      "question": "设立居住权需要办理登记吗？",
+      "abstained": false,
+      "topScore": 0.7692,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#368",
+        "民法典.md#349",
+        "民法典.md#370",
+        "民法典.md#367",
+        "民法典.md#369"
+      ]
+    },
+    {
+      "id": "sem-13",
+      "category": "semantic",
+      "question": "从没有处分权的人手里买东西，什么情况下能取得所有权？",
+      "abstained": false,
+      "topScore": 0.6766,
+      "reason": "answered",
+      "ranks": [
+        2
+      ],
+      "retrieved": [
+        "民法典.md#312",
+        "民法典.md#311",
+        "民法典.md#597",
+        "民法典.md#317",
+        "民法典.md#240"
+      ]
+    },
+    {
+      "id": "sem-14",
+      "category": "semantic",
+      "question": "限制民事行为能力人实施的民事法律行为，效力怎么认定？",
+      "abstained": false,
+      "topScore": 0.7748,
+      "reason": "answered",
+      "ranks": [
+        1,
+        0
+      ],
+      "retrieved": [
+        "民法典.md#145",
+        "民法典.md#143",
+        "民法典.md#22",
+        "民法典.md#144",
+        "民法典.md#157"
+      ]
+    },
+    {
+      "id": "sem-15",
+      "category": "semantic",
+      "question": "没有代理权却以别人名义签合同，对方有理由相信他有代理权，合同有效吗？",
+      "abstained": false,
+      "topScore": 0.7298,
+      "reason": "answered",
+      "ranks": [
+        2
+      ],
+      "retrieved": [
+        "民法典.md#503",
+        "民法典.md#172",
+        "民法典.md#504",
+        "民法典.md#166",
+        "民法典.md#168"
+      ]
+    },
+    {
+      "id": "sem-16",
+      "category": "semantic",
+      "question": "悬赏寻找失物，事后反悔不付报酬，可以要求支付吗？",
+      "abstained": false,
+      "topScore": 0.6516,
+      "reason": "answered",
+      "ranks": [
+        2
+      ],
+      "retrieved": [
+        "民法典.md#317",
+        "民法典.md#499",
+        "民法典.md#579",
+        "民法典.md#460",
+        "民法典.md#988"
+      ]
+    },
+    {
+      "id": "sem-17",
+      "category": "semantic",
+      "question": "股东会决议内容违反了公司章程，股东能怎么救济？",
+      "abstained": false,
+      "topScore": 0.7472,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#26",
+        "公司法.md#25",
+        "公司法.md#28",
+        "公司法.md#211",
+        "公司法.md#27"
+      ]
+    },
+    {
+      "id": "sem-18",
+      "category": "semantic",
+      "question": "股份有限公司的股东能不能把股份转让给股东以外的人？",
+      "abstained": false,
+      "topScore": 0.789,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#157",
+        "公司法.md#163",
+        "公司法.md#160",
+        "公司法.md#90",
+        "公司法.md#84"
+      ]
+    },
+    {
+      "id": "sem-19",
+      "category": "semantic",
+      "question": "股东会都有哪些职权？",
+      "abstained": false,
+      "topScore": 0.7244,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "公司法.md#59",
+        "公司法.md#111",
+        "公司法.md#118",
+        "公司法.md#114",
+        "公司法.md#116"
+      ]
+    },
+    {
+      "id": "sem-20",
+      "category": "semantic",
+      "question": "法定代表人以公司名义从事民事活动，法律后果由谁承担？",
+      "abstained": false,
+      "topScore": 0.8174,
+      "reason": "answered",
+      "ranks": [
+        1,
+        3
+      ],
+      "retrieved": [
+        "公司法.md#11",
+        "民法典.md#62",
+        "民法典.md#61",
+        "公司法.md#10",
+        "公司法.md#262"
+      ]
+    },
+    {
+      "id": "sem-21",
+      "category": "semantic",
+      "question": "租赁物在承租人按照租赁合同占有期限内发生所有权变动的，租赁合同还有效吗？",
+      "abstained": false,
+      "topScore": 0.8587,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#725",
+        "民法典.md#720",
+        "民法典.md#734",
+        "民法典.md#759",
+        "民法典.md#757"
+      ]
+    },
+    {
+      "id": "near-01",
+      "category": "near_duplicate",
+      "question": "行纪合同这一章没有规定的，参照适用什么合同的规定？",
+      "abstained": false,
+      "topScore": 0.8634,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#960",
+        "民法典.md#966",
+        "民法典.md#808",
+        "民法典.md#958",
+        "民法典.md#918"
+      ]
+    },
+    {
+      "id": "near-02",
+      "category": "near_duplicate",
+      "question": "中介合同这一章没有规定的，参照适用什么合同的规定？",
+      "abstained": false,
+      "topScore": 0.846,
+      "reason": "answered",
+      "ranks": [
+        1
+      ],
+      "retrieved": [
+        "民法典.md#966",
+        "民法典.md#960",
+        "民法典.md#808",
+        "民法典.md#508",
+        "民法典.md#918"
+      ]
+    },
+    {
+      "id": "ood-01",
+      "category": "out_of_domain",
+      "question": "劳动合同被违法解除，经济补偿金该怎么算？",
+      "abstained": false,
+      "topScore": 0.6341,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#585",
+        "民法典.md#583",
+        "民法典.md#806",
+        "民法典.md#584",
+        "民法典.md#591"
+      ]
+    },
+    {
+      "id": "ood-02",
+      "category": "out_of_domain",
+      "question": "专利申请需要满足什么创造性标准？",
+      "abstained": false,
+      "topScore": 0.5078,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#859",
+        "民法典.md#868",
+        "民法典.md#123",
+        "民法典.md#866",
+        "民法典.md#860"
+      ]
+    },
+    {
+      "id": "ood-03",
+      "category": "out_of_domain",
+      "question": "醉酒驾驶机动车会被怎么处罚？",
+      "abstained": false,
+      "topScore": 0.5712,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1208",
+        "民法典.md#1212",
+        "民法典.md#1213",
+        "民法典.md#1190",
+        "民法典.md#1209"
+      ]
+    },
+    {
+      "id": "ood-04",
+      "category": "out_of_domain",
+      "question": "故意伤害致人重伤的，判几年？",
+      "abstained": false,
+      "topScore": 0.6313,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1179",
+        "民法典.md#1244",
+        "民法典.md#1182",
+        "民法典.md#1185",
+        "民法典.md#1183"
+      ]
+    },
+    {
+      "id": "ood-05",
+      "category": "out_of_domain",
+      "question": "试用期最长可以约定多久？",
+      "abstained": false,
+      "topScore": 0.7215,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#637",
+        "民法典.md#638",
+        "民法典.md#705",
+        "民法典.md#707",
+        "民法典.md#678"
+      ]
+    },
+    {
+      "id": "ood-06",
+      "category": "out_of_domain",
+      "question": "用人单位安排周末加班，加班费按什么标准支付？",
+      "abstained": false,
+      "topScore": 0.5484,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#782",
+        "民法典.md#1191",
+        "民法典.md#783",
+        "民法典.md#846",
+        "民法典.md#639"
+      ]
+    },
+    {
+      "id": "ood-07",
+      "category": "out_of_domain",
+      "question": "未签订书面劳动合同，劳动者可以主张二倍工资吗？",
+      "abstained": false,
+      "topScore": 0.6518,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#579",
+        "民法典.md#803",
+        "民法典.md#469",
+        "民法典.md#578",
+        "民法典.md#964"
+      ]
+    },
+    {
+      "id": "ood-08",
+      "category": "out_of_domain",
+      "question": "女职工在孕期被辞退，可以要求继续履行劳动合同吗？",
+      "abstained": false,
+      "topScore": 0.5766,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#578",
+        "民法典.md#1082",
+        "民法典.md#666",
+        "民法典.md#579",
+        "民法典.md#528"
+      ]
+    },
+    {
+      "id": "ood-09",
+      "category": "out_of_domain",
+      "question": "劳动争议申请仲裁的时效期间是多久？",
+      "abstained": false,
+      "topScore": 0.7198,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#198",
+        "民法典.md#195",
+        "民法典.md#188",
+        "民法典.md#594",
+        "民法典.md#192"
+      ]
+    },
+    {
+      "id": "ood-10",
+      "category": "out_of_domain",
+      "question": "盗窃他人财物数额较大的，一般判多久？",
+      "abstained": false,
+      "topScore": 0.6128,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1215",
+        "民法典.md#1170",
+        "民法典.md#1244",
+        "民法典.md#1182",
+        "民法典.md#1166"
+      ]
+    },
+    {
+      "id": "ood-11",
+      "category": "out_of_domain",
+      "question": "正当防卫明显超过必要限度造成损害的，要负刑事责任吗？",
+      "abstained": false,
+      "topScore": 0.776,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#181",
+        "民法典.md#1244",
+        "公司法.md#264",
+        "民法典.md#1166",
+        "民法典.md#1170"
+      ]
+    },
+    {
+      "id": "ood-12",
+      "category": "out_of_domain",
+      "question": "交通肇事逃逸致人死亡的，法定刑是多少？",
+      "abstained": false,
+      "topScore": 0.6514,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1216",
+        "民法典.md#1180",
+        "民法典.md#1208",
+        "民法典.md#1244",
+        "公司法.md#264"
+      ]
+    },
+    {
+      "id": "ood-13",
+      "category": "out_of_domain",
+      "question": "取保候审的适用条件是什么？",
+      "abstained": false,
+      "topScore": 0.6221,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#38",
+        "民法典.md#36",
+        "民法典.md#196",
+        "民法典.md#39",
+        "民法典.md#28"
+      ]
+    },
+    {
+      "id": "ood-14",
+      "category": "out_of_domain",
+      "question": "诈骗公私财物数额巨大的，如何量刑？",
+      "abstained": false,
+      "topScore": 0.6006,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1244",
+        "公司法.md#264",
+        "公司法.md#252",
+        "民法典.md#1182",
+        "公司法.md#262"
+      ]
+    },
+    {
+      "id": "ood-15",
+      "category": "out_of_domain",
+      "question": "商标注册申请被驳回后，可以在多长时间内申请复审？",
+      "abstained": false,
+      "topScore": 0.5429,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#192",
+        "民法典.md#199",
+        "民法典.md#195",
+        "民法典.md#1206",
+        "民法典.md#194"
+      ]
+    },
+    {
+      "id": "ood-16",
+      "category": "out_of_domain",
+      "question": "发明专利权的保护期限是多少年？",
+      "abstained": false,
+      "topScore": 0.6058,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#188",
+        "民法典.md#859",
+        "民法典.md#865",
+        "民法典.md#123",
+        "民法典.md#868"
+      ]
+    },
+    {
+      "id": "ood-17",
+      "category": "out_of_domain",
+      "question": "职务发明的专利权归单位还是归发明人？",
+      "abstained": false,
+      "topScore": 0.6004,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#859",
+        "民法典.md#123",
+        "民法典.md#847",
+        "民法典.md#848",
+        "民法典.md#860"
+      ]
+    },
+    {
+      "id": "ood-18",
+      "category": "out_of_domain",
+      "question": "著作权保护期是作者终生加多少年？",
+      "abstained": false,
+      "topScore": 0.546,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#188",
+        "民法典.md#541",
+        "民法典.md#332",
+        "民法典.md#199",
+        "民法典.md#1027"
+      ]
+    },
+    {
+      "id": "ood-19",
+      "category": "out_of_domain",
+      "question": "不服一审民事判决，上诉期是多少天？",
+      "abstained": false,
+      "topScore": 0.6561,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#188",
+        "民法典.md#192",
+        "民法典.md#194",
+        "民法典.md#195",
+        "民法典.md#199"
+      ]
+    },
+    {
+      "id": "ood-20",
+      "category": "out_of_domain",
+      "question": "申请强制执行的期限是多久？",
+      "abstained": false,
+      "topScore": 0.6276,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#194",
+        "民法典.md#192",
+        "民法典.md#188",
+        "民法典.md#190",
+        "民法典.md#199"
+      ]
+    },
+    {
+      "id": "ood-21",
+      "category": "out_of_domain",
+      "question": "民事诉讼中申请财产保全需要提供担保吗？",
+      "abstained": false,
+      "topScore": 0.6324,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#390",
+        "民法典.md#391",
+        "民法典.md#387",
+        "民法典.md#392",
+        "民法典.md#388"
+      ]
+    },
+    {
+      "id": "ood-22",
+      "category": "out_of_domain",
+      "question": "对行政处罚决定不服，申请行政复议的期限是多久？",
+      "abstained": false,
+      "topScore": 0.6422,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#192",
+        "民法典.md#199",
+        "民法典.md#195",
+        "民法典.md#194",
+        "民法典.md#188"
+      ]
+    },
+    {
+      "id": "ood-23",
+      "category": "out_of_domain",
+      "question": "行政机关作出责令停产停业的处罚前，当事人有权要求听证吗？",
+      "abstained": false,
+      "topScore": 0.5571,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "公司法.md#255",
+        "民法典.md#1205",
+        "民法典.md#701",
+        "民法典.md#548",
+        "民法典.md#1207"
+      ]
+    },
+    {
+      "id": "ood-24",
+      "category": "out_of_domain",
+      "question": "行政拘留最长可以拘留多少天？",
+      "abstained": false,
+      "topScore": 0.5211,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "公司法.md#260",
+        "公司法.md#262",
+        "民法典.md#188",
+        "公司法.md#264",
+        "公司法.md#261"
+      ]
+    },
+    {
+      "id": "ood-25",
+      "category": "out_of_domain",
+      "question": "个人所得税的综合所得适用什么税率？",
+      "abstained": false,
+      "topScore": 0.4936,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#321",
+        "民法典.md#680",
+        "公司法.md#210",
+        "民法典.md#846",
+        "民法典.md#670"
+      ]
+    },
+    {
+      "id": "ood-26",
+      "category": "out_of_domain",
+      "question": "增值税小规模纳税人的征收率是多少？",
+      "abstained": false,
+      "topScore": 0.4155,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#517",
+        "民法典.md#56",
+        "公司法.md#148",
+        "民法典.md#201",
+        "民法典.md#223"
+      ]
+    },
+    {
+      "id": "ood-27",
+      "category": "out_of_domain",
+      "question": "企业虚开增值税专用发票要承担什么法律责任？",
+      "abstained": false,
+      "topScore": 0.6735,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "公司法.md#250",
+        "公司法.md#252",
+        "公司法.md#254",
+        "公司法.md#259",
+        "公司法.md#263"
+      ]
+    },
+    {
+      "id": "ood-28",
+      "category": "out_of_domain",
+      "question": "网购商品七天无理由退货的起算时间怎么算？",
+      "abstained": false,
+      "topScore": 0.624,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#201",
+        "民法典.md#512",
+        "民法典.md#831",
+        "民法典.md#675",
+        "民法典.md#623"
+      ]
+    },
+    {
+      "id": "ood-29",
+      "category": "out_of_domain",
+      "question": "经营者欺诈消费者的，惩罚性赔偿是多少倍？",
+      "abstained": false,
+      "topScore": 0.5787,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1185",
+        "民法典.md#1207",
+        "公司法.md#263",
+        "民法典.md#1184",
+        "公司法.md#250"
+      ]
+    },
+    {
+      "id": "ood-30",
+      "category": "out_of_domain",
+      "question": "买到不符合食品安全标准的食品，可以要求十倍赔偿吗？",
+      "abstained": false,
+      "topScore": 0.6111,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1207",
+        "民法典.md#1203",
+        "民法典.md#1204",
+        "民法典.md#617",
+        "民法典.md#1206"
+      ]
+    },
+    {
+      "id": "ood-31",
+      "category": "out_of_domain",
+      "question": "闯红灯被电子眼拍到，罚款和记分标准是什么？",
+      "abstained": false,
+      "topScore": 0.5405,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1208",
+        "民法典.md#1212",
+        "民法典.md#1213",
+        "民法典.md#1210",
+        "民法典.md#1216"
+      ]
+    },
+    {
+      "id": "ood-32",
+      "category": "out_of_domain",
+      "question": "发生交通事故后逃逸，驾驶证会被怎么处理？",
+      "abstained": false,
+      "topScore": 0.6731,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1216",
+        "民法典.md#1208",
+        "民法典.md#1211",
+        "民法典.md#1212",
+        "民法典.md#1210"
+      ]
+    },
+    {
+      "id": "ood-33",
+      "category": "out_of_domain",
+      "question": "公司不能清偿到期债务，债权人申请破产需要满足什么条件？",
+      "abstained": false,
+      "topScore": 0.7107,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "公司法.md#237",
+        "民法典.md#536",
+        "公司法.md#54",
+        "公司法.md#242",
+        "公司法.md#235"
+      ]
+    },
+    {
+      "id": "ood-34",
+      "category": "out_of_domain",
+      "question": "内幕交易要承担什么法律责任？",
+      "abstained": false,
+      "topScore": 0.644,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1168",
+        "公司法.md#264",
+        "公司法.md#252",
+        "公司法.md#253",
+        "公司法.md#256"
+      ]
+    },
+    {
+      "id": "ood-35",
+      "category": "out_of_domain",
+      "question": "投保人违反如实告知义务，保险人可以解除合同吗？",
+      "abstained": false,
+      "topScore": 0.6518,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#962",
+        "民法典.md#539",
+        "民法典.md#538",
+        "民法典.md#528",
+        "民法典.md#563"
+      ]
+    },
+    {
+      "id": "ood-36",
+      "category": "out_of_domain",
+      "question": "企业超标排放污染物会被处以什么处罚？",
+      "abstained": false,
+      "topScore": 0.5984,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1232",
+        "公司法.md#262",
+        "民法典.md#1231",
+        "公司法.md#253",
+        "公司法.md#263"
+      ]
+    },
+    {
+      "id": "ood-37",
+      "category": "out_of_domain",
+      "question": "违法收集个人信息，最高可以处多少罚款？",
+      "abstained": false,
+      "topScore": 0.5878,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "公司法.md#251",
+        "民法典.md#1036",
+        "民法典.md#111",
+        "公司法.md#250",
+        "民法典.md#1035"
+      ]
+    },
+    {
+      "id": "ood-38",
+      "category": "out_of_domain",
+      "question": "劳动者与用人单位达成工伤赔偿私了协议后，还能反悔吗？",
+      "abstained": false,
+      "topScore": 0.591,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#787",
+        "民法典.md#592",
+        "民法典.md#1191",
+        "民法典.md#987",
+        "民法典.md#583"
+      ]
+    },
+    {
+      "id": "ood-39",
+      "category": "out_of_domain",
+      "question": "明天北京的天气怎么样？",
+      "abstained": true,
+      "topScore": 0.274,
+      "reason": "below_threshold",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1196",
+        "民法典.md#602",
+        "民法典.md#1086",
+        "民法典.md#516",
+        "民法典.md#1258"
+      ]
+    },
+    {
+      "id": "ood-40",
+      "category": "out_of_domain",
+      "question": "番茄炒蛋怎么做才好吃？",
+      "abstained": true,
+      "topScore": 0.308,
+      "reason": "below_threshold",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#1184",
+        "民法典.md#1166",
+        "民法典.md#1179",
+        "民法典.md#1186",
+        "民法典.md#1182"
+      ]
+    },
+    {
+      "id": "ood-41",
+      "category": "out_of_domain",
+      "question": "TypeScript 里怎么把一个数组去重？",
+      "abstained": false,
+      "topScore": 0.3599,
+      "reason": "answered",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#632",
+        "民法典.md#496",
+        "民法典.md#1119",
+        "民法典.md#623",
+        "民法典.md#517"
+      ]
+    },
+    {
+      "id": "ood-42",
+      "category": "out_of_domain",
+      "question": "世界上最高的山峰是哪座？",
+      "abstained": true,
+      "topScore": 0.3347,
+      "reason": "below_threshold",
+      "ranks": [],
+      "retrieved": [
+        "民法典.md#421",
+        "民法典.md#1244",
+        "民法典.md#420",
+        "民法典.md#1242",
+        "民法典.md#422"
+      ]
+    }
+  ]
+}
