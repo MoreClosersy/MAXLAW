@@ -11,21 +11,30 @@
 #   将来若确实想要，正确的形态是一个单独的 workflow_dispatch 任务（带 key、手动触发、
 #   结果只归档不判定），而不是挂在这条 push 路径上。
 #
-# 索引缓存的三个要点：
-#   1. `cache/` 在 .gitignore 里（28MB 向量），所以走 actions/cache 而不是 git。
-#   2. 缓存键含 knowledge/*.md 的哈希与模型名——语料或模型一变就该重建，否则量的是旧索引。
-#   3. **缓存热时整个 job 不需要任何密钥**：语料向量和 31 条查询向量都在缓存里，
-#      eval 全程离线。只有冷缓存（改了语料/换了模型）才需要 EMBEDDING_API_KEY。
-#      注意 eval 会把查询向量也落盘，所以缓存必须**在 eval 之后**才完整。
+# 索引缓存的四个要点：
+#   1. `cache/` 在 .gitignore 里（~28MB 向量），所以走 actions/cache 而不是 git。
+#   2. 缓存键 = 语料指纹 + 模型 + INDEX_VERSION。语料变更由 corpusHash 自动覆盖；
+#      **分块逻辑或 embedText 变更时手动把 INDEX_VERSION +1**——否则键不变，
+#      而 chunk hash 全变了，严格模式会报"索引不完整"。
+#   3. 冷缓存**不需要密钥**也能跑：从 release `index-cache` 下载预构建索引
+#      （`index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`，用 tools/pack_index.sh 生成）。
+#      只有该资产不存在时才退回 EMBEDDING_API_KEY 现场建索引；
+#      两者都没有则明确失败——没有可信索引就没有可测量的指标，不静默跳过。
+#   4. 缓存必须在 eval **之后**保存：eval 会把 69 条查询向量写进同一个文件。
+#      （`pnpm embed` 的 pruneCache() 会把这些查询向量当孤儿删掉，所以热缓存时
+#       不能再跑 embed。）
 name: eval-gate
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 env:
   EMBEDDING_MODEL: BAAI/bge-base-zh-v1.5
+  # 分块逻辑 / embedText 变更时 +1，并同步上传新的预构建索引。
+  INDEX_VERSION: 1
 
 jobs:
   gate:
@@ -44,37 +53,85 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # 先跑不依赖 embedding 的确定性检查：它们失败时没必要再碰索引缓存。
+      - name: 单元测试 + 语料结构检查
+        run: |
+          pnpm test
+          pnpm lint:corpus
+
+      - name: 读取语料指纹
+        id: corpus
+        run: echo "hash=$(node -e 'console.log(require("./knowledge/CORPUS.json").corpusHash)')" >> "$GITHUB_OUTPUT"
+
       - name: 恢复嵌入索引缓存
         id: cache
         uses: actions/cache/restore@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-${{ hashFiles('knowledge/*.md') }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}
 
-      # 冷缓存才建索引。热缓存时**不能**跑这条：pnpm embed 的 pruneCache() 会以
-      # 语料 chunk 为准清理缓存，把查询向量一并删掉，反而让下一步需要联网。
-      - name: 建索引（仅冷缓存）
+      # 冷缓存的第一条路：release 里的预构建索引。公开仓库的 release 资产
+      # 不需要 token，fork PR 也能下载——这正是不把密钥当唯一路径的理由。
+      - name: 冷缓存：下载预构建索引
+        id: fetch
         if: steps.cache.outputs.cache-hit != 'true'
         env:
+          CORPUS_HASH: ${{ steps.corpus.outputs.hash }}
+        run: |
+          MODEL_SLUG="${EMBEDDING_MODEL//\//_}"
+          ASSET="index-v${INDEX_VERSION}-${MODEL_SLUG}-${CORPUS_HASH}.json.gz"
+          URL="https://github.com/${{ github.repository }}/releases/download/index-cache/${ASSET}"
+          TARGET="cache/${MODEL_SLUG}_cache.json"
+          if curl -fsSL "$URL" -o /tmp/index.json.gz; then
+            mkdir -p cache
+            gunzip -c /tmp/index.json.gz > "$TARGET"
+            COUNT=$(node -e 'const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); console.log(Object.keys(d).length)' "$TARGET")
+            if [ "$COUNT" -lt 1500 ]; then
+              echo "::error::预构建索引只有 ${COUNT} 条，疑似截断：$URL"
+              exit 1
+            fi
+            echo "have_index=true" >> "$GITHUB_OUTPUT"
+            echo "已下载预构建索引（${COUNT} 条）：$URL"
+          else
+            echo "have_index=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::没有预构建索引（$URL），回退到 EMBEDDING_API_KEY"
+          fi
+
+      - name: 建索引（冷缓存且没有预构建索引时）
+        id: embed
+        if: steps.cache.outputs.cache-hit != 'true' && steps.fetch.outputs.have_index != 'true'
+        env:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          CORPUS_HASH: ${{ steps.corpus.outputs.hash }}
         run: |
           if [ -z "$EMBEDDING_API_KEY" ]; then
-            echo "::error::索引缓存未命中，且本 job 拿不到 EMBEDDING_API_KEY。"
+            echo "::error::索引缓存未命中：没有预构建索引，也拿不到 EMBEDDING_API_KEY。"
+            echo "修复（二选一）："
+            echo "  1. 把预构建索引上传到 release 'index-cache'，文件名 index-v${INDEX_VERSION}-${EMBEDDING_MODEL//\//_}-${CORPUS_HASH}.json.gz"
+            echo "     （本地：pnpm embed && pnpm index:pack）"
+            echo "  2. 给仓库配置 EMBEDDING_API_KEY secret，首次运行现场建索引并回填缓存"
             echo "没有可信索引就没有可测量的指标——门禁不判定，直接失败（不静默跳过）。"
-            echo "fork PR 改动了 knowledge/*.md 时会走到这里，需要维护者先预热缓存。"
             exit 1
           fi
           pnpm embed
 
+      # 冷缓存时 eval 还要嵌入 69 条查询（严格模式会把兜底向量变成硬失败），
+      # 所以密钥不只 embed 那一步要，这一步也要。热缓存（预构建资产里含查询向量）
+      # 时它用不到，传了也无副作用。
       - name: 评测 + 门禁
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
         run: pnpm eval:gate
 
+      # 只有索引完整时才保存：`pnpm embed` 每 200 条落一次盘，中途失败会留下半份缓存；
+      # 旧写法 `if: always()` 会把它存进同一个 key，下一次运行就"命中"了一个残缺索引。
+      # 下载来的预构建索引按定义是完整的。eval 失败也照存（索引本身没坏）。
       - name: 保存索引缓存（含查询向量）
-        if: always() && steps.cache.outputs.cache-hit != 'true'
+        if: always() && steps.cache.outputs.cache-hit != 'true' && (steps.fetch.outputs.have_index == 'true' || steps.embed.outcome == 'success')
         uses: actions/cache/save@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-${{ hashFiles('knowledge/*.md') }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}
 
       - name: 存档评测报告
         if: always()

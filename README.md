@@ -487,13 +487,37 @@ fail on a regression, not to express a target. They are rank-based, so they move
 rank actually flips.
 
 `.github/workflows/eval-gate.yml` runs this on push. It restores `cache/` via
-`actions/cache`, keyed on the corpus files and the model name; a warm cache makes the entire
-gate **offline** — 1,681 chunk vectors plus the query vectors, no API key, no secrets.
-`pnpm embed` runs only on a cache miss, because its `pruneCache()` would otherwise delete the
-query vectors and force the next step online to get them back.
+`actions/cache`, keyed on the corpus fingerprint, the model and an `INDEX_VERSION` that is
+bumped when the chunker changes; a warm cache makes the entire gate **offline** — 1,681 chunk
+vectors plus the query vectors, no API key, no secrets. `pnpm embed` runs only on a cache miss,
+because its `pruneCache()` would otherwise delete the query vectors and force the next step
+online to get them back.
 
-> The workflow YAML parses and its steps are reviewed, but it has **never been executed** —
-> GitHub Actions cannot be run locally, and this machine has no Docker. Reviewed, not proven.
+**The first run failed, and it is the cold-cache case the design had never exercised.** Pushing
+to `main` triggered the workflow for the first time; `actions/cache` was empty (nothing had ever
+saved it), and the job has no `EMBEDDING_API_KEY`, so the gate refused to measure. That refusal
+is correct — a gate on a missing index is worse than a red build — but "add the secret" cannot
+be the only way in, because forks never see secrets. The workflow now bootstraps cold caches
+from a **release asset**, with the secret as a fallback:
+
+```bash
+pnpm embed          # rebuild after a corpus / INDEX_VERSION change
+pnpm eval           # so the 69 query vectors are in the same cache file
+pnpm index:pack     # index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz
+# upload it to a release tagged `index-cache` (overwrite the same asset name)
+```
+
+On a cache miss the job downloads
+`releases/download/index-cache/index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`, checks the
+entry count, then saves the restored cache for the next run. The failure also exposed two bugs
+that are now fixed: the save step used `if: always()` and would have cached a **half-built**
+index after a failed `pnpm embed`, and the key ignored the chunker, so a chunking change would
+have re-used an index whose chunk hashes no longer exist. `pnpm test` and `pnpm lint:corpus`
+now run before any embedding work.
+
+> Status: the bootstrap path is committed but the workflow has **not yet run green** — the
+> release asset has to be uploaded once, and this machine has no `gh` (the binary is broken)
+> and no Docker, so neither step could be verified locally.
 
 
 ## Quick Start
@@ -885,6 +909,7 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
 | `pnpm eval:faithfulness` | LLM-judge faithfulness: are the answer's claims supported by what was retrieved? **Costs money** — see §Faithfulness. |
 | `pnpm eval:faithfulness:calib` | The same, plus defect-injection calibration and judge-stability runs. What makes the score interpretable. |
 | `pnpm embed` | Rebuild the retrieval index and refresh the corpus manifest. |
+| `pnpm index:pack` | Pack the index into the release asset CI downloads on a cold cache — see §Evaluation. |
 | `pnpm lint:corpus` | Structural corpus checks. Exits non-zero on error. |
 | `pnpm corpus:manifest` | Refresh `knowledge/CORPUS.json` without touching embeddings. |
 

@@ -14,6 +14,7 @@
     "eval:rerank": "RERANK_ENABLED=1 tsx eval/run.ts",
     "lint:corpus": "tsx src/lintCorpus.ts",
     "corpus:manifest": "tsx src/manifest.ts",
+    "index:pack": "bash tools/pack_index.sh",
     "eval:signals": "tsx eval/abstentionSignals.ts",
         "eval:abstention": "tsx eval/abstention.ts",
     "eval:faithfulness": "tsx eval/faithfulness.ts",
