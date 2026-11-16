@@ -270,18 +270,21 @@ else on this page:
 
 The 0.957 is not the finding. This is:
 
-| Injected defect | Detected |
-|---|---|
-| `fabricated_cite` — cites an article that does not exist | 19/23 |
-| `distorted_number` — a figure in the article is altered | 6/6 |
-| `article_swap` — cites a real, retrieved article that does not say this | **7/22** |
-| `unsupported_append` — asserts something with no basis in the articles | 22/23 |
-| **overall** | **54/74 = 0.730** |
+| Injected defect | Judge | Citation check | Either |
+|---|---|---|---|
+| `fabricated_cite` — cites an article that does not exist | 19/23 | 23/23 | 23/23 |
+| `distorted_number` — a figure in the article is altered | 6/6 | 0/6 | 6/6 |
+| `article_swap` — cites a real, retrieved article that does not say this | **7/22** | **10/22** | **14/22** |
+| `unsupported_append` — asserts something with no basis in the articles | 22/23 | 0/23 | 22/23 |
+| **overall** | **54/74 = 0.730** | 33/74 = 0.446 | **65/74 = 0.878** |
 
 The defects are injected by deterministic string surgery, so their labels are known and depend on
-no model. The judge misses **27%** of them, so the real faithfulness is below 0.957 — by how much,
-this run cannot say. A judge's score reported without its detection rate on known-bad input is a
-statement about the judge, not about the system.
+no model. The judge misses **27%** of them, so real faithfulness is below 0.957 — by how much this
+run cannot say. A judge's score reported without its detection rate on known-bad input is a
+statement about the judge, not about the system. The citation check is a separate guardrail, not
+part of the judge: together the two guardrails miss 9/74 (12%), and the `article_swap` column is
+the point — 7/22 becomes 14/22 with no model in the loop. The citation check cannot see
+`distorted_number` or `unsupported_append` at all; those stay the judge's job.
 
 **The gap is concentrated in one failure mode, and it is the one the prompt warns about.** The
 judge catches an altered number 6 times out of 6 and a fabricated article 19 times out of 23, but
@@ -295,15 +298,18 @@ not checking that the article the answer *points the reader at* is the one that 
 
 This was a known-open gap rather than an oversight: the citation verifier only checked existence,
 so "number real, content wrong" fell between the two guardrails, and the judge closes it only about
-a third of the time. The deterministic half is now implemented, and it is partial by design:
+a third of the time. The deterministic half is now implemented and measured on the **same** injected
+set (`pnpm eval:faithfulness:calib` prints both columns): the citation check catches 10/22 swaps,
+the judge 7/22, either 14/22. Eight swaps are still missed by both. It is partial by design:
 `CitationVerifier` computes the bigram coverage between the sentence around each `verified`
 citation and the cited article, and the same coverage against every *other* retrieved article. If
 another article matches the sentence by ≥ 0.10 more and by ≥ 0.25 absolutely, the citation becomes
 `content_mismatch` instead of `verified`. Measured with `pnpm eval:citations` (27 cached answers,
 offline): **0/51 false positives on real citations, 8/25 injected swaps flagged** — 10/25 if you
-count every non-verified status. The 17 misses are the honest part: heading-only references,
-paraphrases the cited article does not lexically match, and swaps where the sentence has too little
-text to judge. The rule is deliberately one-sided — low overlap alone is never flagged, because
+count every non-verified status. On the faithfulness calibration set, where the judge is scored on
+the exact same mutants, it flags 10/22, and "either guardrail" is 14/22. The misses are the honest
+part: heading-only references, paraphrases the cited article does not lexically match, and swaps
+where the sentence has too little text to judge. The rule is deliberately one-sided — low overlap alone is never flagged, because
 legal answers paraphrase constantly and a warning that fires on paraphrase is a warning nobody
 reads. It is complementary to the judge (7/22 on its own injection set); the two were **not**
 measured jointly.
@@ -923,8 +929,10 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   not the underlying gap — real judgment text would need a separate, licensed source.
 - **The faithfulness judge is measured, and its detection rate is the point.** It misses 27% of
   injected defects (54/74), concentrated in citation swaps (7/22), so the reported 0.957 is an
-  upper bound. It is also judge-dependent to 0.369, and its precision has no automated proxy —
-  see §Faithfulness.
+  upper bound. The deterministic citation check closes part of that gap — either guardrail catches
+  65/74 (article swaps 7/22 → 14/22) — but 9/74 still fall through, and the check only covers
+  citation-shaped defects. The judge is also judge-dependent to 0.369, and its precision has no
+  automated proxy — see §Faithfulness.
 - **Retrieval metrics are configuration-specific.** The report records the embedding model,
   its dimension, **and the reranker settings** for exactly this reason — reranking reorders
   results without touching the corpus, so a report that omits it makes two incomparable runs

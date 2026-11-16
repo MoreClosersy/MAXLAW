@@ -43,7 +43,10 @@ import { RERANK_ENABLED, RERANK_MODEL } from '../src/Reranker.js';
 import { loadPrompt } from '../src/prompts.js';
 import { loadKnowledge } from '../src/loadKnowledge.js';
 import { EVAL_DIR, KNOWLEDGE_DIR } from '../src/paths.js';
-import { parseJudgeOutput, mutate, caughtBy, type Claim, type Mutant } from './judgeCore.js';
+import { parseJudgeOutput, mutate, caughtBy, parseContextBlocks, type Claim, type Mutant } from './judgeCore.js';
+import { verifyCitations, type CitationReport } from '../src/CitationVerifier.js';
+import { cnToNumber } from '../src/articleNo.js';
+import type { RetrievedChunk } from '../src/VectorStore.js';
 export type { Claim } from './judgeCore.js';
 
 // ---------------------------------------------------------------------------
@@ -252,6 +255,10 @@ if (!VERBOSE) process.stdout.write('\n');
 // --- 校准：注入缺陷，看判官抓不抓得到 ---------------------------------------
 interface CalibRow {
     id: string; kind: string; note: string; needle: string; caught: boolean; claims: number;
+    /** 确定性引用检查是否拦下这次注入（fabricated / content_mismatch / not_in_context） */
+    citationCaught: boolean;
+    /** 被拦下时的状态，便于区分是"条号不存在"还是"条号与句子对不上" */
+    citationStatus: string | null;
     /** 判官点出的 unsupported 里，有没有一条**提到被注入的标志物**。
      *  只作诊断用，不参与判定：字符串匹配被证明不可靠（判官的摘录天然会截断条号，
      *  数字写法也可能不同）。但"抓到了"远多于"点到了标志物"时，说明判官是在
@@ -263,6 +270,36 @@ interface CalibRow {
      *  根本不是缺陷（换过去的那条恰好也支持该断言）。看不到判官的原话就无从判断。 */
     missedClaims?: { text: string; verdict: string; evidence: string }[];
 }
+/** 把判官看到的 context 还原成校验器要的检索结果形状（它只读 source/articleNo/document）。 */
+function chunksFromContext(context: string): RetrievedChunk[] {
+    return parseContextBlocks(context).map(b => ({
+        document: b.body,
+        source: b.file,
+        articleNo: b.articleNoRaw,
+        chapter: null,
+        hash: `${b.file}#${b.articleNoRaw ?? b.body.slice(0, 12)}`,
+        embedText: b.body,
+        score: 0,
+        exactArticleHit: false,
+    }));
+}
+
+/** 这次注入是否被确定性引用检查拦下；只对两类"改条号"的注入有意义。 */
+function citationCatch(m: Mutant, report: CitationReport): { caught: boolean; status: string | null } {
+    if (m.kind === 'fabricated_cite') {
+        const n = Number(m.needle);
+        const c = report.checks.find(x => x.articleNo === n);
+        return { caught: c?.status === 'fabricated', status: c?.status ?? null };
+    }
+    if (m.kind === 'article_swap') {
+        const mm = m.needle.match(/第\s*([0-9]+|[一二三四五六七八九十百千万零两]+)\s*条/);
+        const n = mm ? cnToNumber(mm[1]) : NaN;
+        const c = report.checks.find(x => x.articleNo === n);
+        return { caught: !!c && c.status !== 'verified', status: c?.status ?? null };
+    }
+    return { caught: false, status: null };
+}
+
 const calib: CalibRow[] = [];
 
 // 校准的基底必须是**原本完全忠实**的答案。判据（见 judgeCore.caughtBy）是
@@ -281,6 +318,7 @@ if (CALIBRATE) {
     for (const g of cleanBase) {
         for (const m of mutate(g.answer, g.context, corpus)) {
             const v = await judge(g.question, g.context, m.answer);
+            const citation = citationCatch(m, verifyCitations(m.answer, retriever.getStore(), chunksFromContext(g.context)));
             // "抓到"= 变体里出现了 unsupported 断言（基底是干净的，所以它只能来自注入）。
             // **刻意不用** faithfulness 分数下降来判断：追加一条坏断言会让分母变大，
             // 分数完全可能不降反升，用分数判断会把"抓到了"误判成"没抓到"。
@@ -289,6 +327,8 @@ if (CALIBRATE) {
             const row: CalibRow = {
                 id: g.id, kind: m.kind, note: m.note, needle: m.needle,
                 caught,
+                citationCaught: citation.caught,
+                citationStatus: citation.status,
                 needleMatched: unsup.some(c => c.text.includes(m.needle) || c.evidence.includes(m.needle)),
                 claims: v.claims.length,
             };
@@ -390,7 +430,7 @@ if (worst.length > 0) {
 
 if (CALIBRATE) {
     const caught = calib.filter(c => c.caught).length;
-    console.log(`\n=== 校准结果：判官检出率 ===`);
+    console.log(`\n=== 校准结果：判官 vs 确定性引用检查 ===`);
     // **零样本的类型必须显式列出。** 上一版只打印出现过的类型，
     // 于是 article_swap 一条都没生成时，汇总显示"7/7 = 1.000"——
     // 看起来四类注入全部检出，实际上有一类根本没测。
@@ -398,12 +438,23 @@ if (CALIBRATE) {
     const ALL_KINDS = ['fabricated_cite', 'distorted_number', 'article_swap', 'unsupported_append'];
     const present = [...new Set(calib.map(c => c.kind))];
     const absent = ALL_KINDS.filter(k => !present.includes(k));
+    console.log(`  ${'类型'.padEnd(19)}${'n'.padStart(4)}  判官    引用检查  任一    都未`);
     for (const k of ALL_KINDS) {
         const sub = calib.filter(c => c.kind === k);
         if (sub.length === 0) { console.log(`  ${k.padEnd(19)} ——  **本轮一条都没生成，这一类未被测量**`); continue; }
-        console.log(`  ${k.padEnd(19)} ${sub.filter(c => c.caught).length}/${sub.length}`);
+        const j = sub.filter(c => c.caught).length;
+        const x = sub.filter(c => c.citationCaught).length;
+        const either = sub.filter(c => c.caught || c.citationCaught).length;
+        console.log(`  ${k.padEnd(19)}${String(sub.length).padStart(4)}  ` +
+            `${`${j}/${sub.length}`.padEnd(8)}${`${x}/${sub.length}`.padEnd(10)}` +
+            `${`${either}/${sub.length}`.padEnd(8)}${sub.length - either}/${sub.length}`);
     }
-    console.log(`  ${'合计'.padEnd(19)} ${caught}/${calib.length} = ${calib.length ? (caught / calib.length).toFixed(3) : '—'}`);
+    const anyCitation = calib.filter(c => c.citationCaught).length;
+    const eitherAll = calib.filter(c => c.caught || c.citationCaught).length;
+    console.log(`  ${'合计'.padEnd(19)}${String(calib.length).padStart(4)}  ` +
+        `${`${caught}/${calib.length}`.padEnd(8)}${`${anyCitation}/${calib.length}`.padEnd(10)}` +
+        `${`${eitherAll}/${calib.length}`.padEnd(8)}${calib.length - eitherAll}/${calib.length}`);
+    console.log(`  引用检查只对"改条号"的两类有定义；distorted_number / unsupported_append 它结构上就抓不到。`);
     const matched = calib.filter(c => c.needleMatched).length;
     if (caught > 0 && matched < caught) {
         console.log(`  其中点到注入标志物的 ${matched}/${caught}——差额部分是判官在别处挑的刺，建议抽查。`);
@@ -447,9 +498,16 @@ const report = {
         base: { clean: cleanBase.length, skippedDirty: dirtyBase.map(j => j.id) },
         total: calib.length,
         caught: calib.filter(c => c.caught).length,
+        citationCaught: calib.filter(c => c.citationCaught).length,
+        eitherCaught: calib.filter(c => c.caught || c.citationCaught).length,
         byKind: Object.fromEntries([...new Set(calib.map(c => c.kind))].map(k => {
             const sub = calib.filter(c => c.kind === k);
-            return [k, { caught: sub.filter(c => c.caught).length, n: sub.length }];
+            return [k, {
+                caught: sub.filter(c => c.caught).length,
+                citationCaught: sub.filter(c => c.citationCaught).length,
+                eitherCaught: sub.filter(c => c.caught || c.citationCaught).length,
+                n: sub.length,
+            }];
         })),
         rows: calib,
     } : null,

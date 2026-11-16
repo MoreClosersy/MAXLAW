@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T07:32:22.705Z",
+  "generatedAt": "2026-11-16T16:23:12.705Z",
   "datasetSha1": "ddfa161d6775",
   "corpus": {
     "version": 2,
@@ -25,10 +25,1317 @@
       "generate": 89350,
       "judge": 0
     },
-    "judgeCacheHits": 27
+    "judgeCacheHits": 109
   },
-  "calibration": null,
-  "stability": null,
+  "calibration": {
+    "base": {
+      "clean": 23,
+      "skippedDirty": [
+        "sem-05",
+        "sem-06",
+        "sem-14",
+        "near-01"
+      ]
+    },
+    "total": 74,
+    "caught": 54,
+    "citationCaught": 33,
+    "eitherCaught": 65,
+    "byKind": {
+      "fabricated_cite": {
+        "caught": 19,
+        "citationCaught": 23,
+        "eitherCaught": 23,
+        "n": 23
+      },
+      "article_swap": {
+        "caught": 7,
+        "citationCaught": 10,
+        "eitherCaught": 14,
+        "n": 22
+      },
+      "unsupported_append": {
+        "caught": 22,
+        "citationCaught": 0,
+        "eitherCaught": 22,
+        "n": 23
+      },
+      "distorted_number": {
+        "caught": 6,
+        "citationCaught": 0,
+        "eitherCaught": 6,
+        "n": 6
+      }
+    },
+    "rows": [
+      {
+        "id": "lookup-01",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-01",
+        "kind": "article_swap",
+        "note": "把「第577条」（民法典.md）换成「第1164条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第1164条",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "lookup-01",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-02",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-02",
+        "kind": "article_swap",
+        "note": "把「第二十三条」（公司法.md）换成「第二百二十五条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第二百二十五条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "公司股东滥用公司法人独立地位和股东有限责任",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          },
+          {
+            "text": "股东利用其控制的两个以上公司实施前款规定行为",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          },
+          {
+            "text": "只有一个股东的公司，股东不能证明公司财产独立于股东自己的财产的",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          }
+        ]
+      },
+      {
+        "id": "lookup-02",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-03",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "lookup-03",
+        "kind": "distorted_number",
+        "note": "把「三十日」改成「九十日」",
+        "needle": "九十日",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-03",
+        "kind": "article_swap",
+        "note": "把「第一千零七十七条」（民法典.md）换成「第七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第七条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 4,
+        "missedClaims": [
+          {
+            "text": "自婚姻登记机关收到离婚登记申请之日起三十日内...",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          },
+          {
+            "text": "任何一方不愿意离婚的，可以向婚姻登记机关撤回...",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          },
+          {
+            "text": "前款规定期限届满后三十日内，双方应当亲自到婚姻登记机关申请发给离婚证...",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          },
+          {
+            "text": "未申请的，视为撤回离婚登记申请。",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          }
+        ]
+      },
+      {
+        "id": "lookup-03",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "lookup-04",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "lookup-04",
+        "kind": "article_swap",
+        "note": "把「第二百六十六条」（公司法.md）换成「第一条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第一条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "本法自2024年7月1日起施行",
+            "verdict": "supported",
+            "evidence": "第二百六十六条"
+          },
+          {
+            "text": "施行前已登记设立的公司，出资期限超过本法规定的期限的，应当逐步调整",
+            "verdict": "supported",
+            "evidence": "第二百六十六条"
+          },
+          {
+            "text": "对于出资期限、出资额明显异常的，公司登记机关可以依法要求其及时调整",
+            "verdict": "supported",
+            "evidence": "第二百六十六条"
+          }
+        ]
+      },
+      {
+        "id": "lookup-04",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-01",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 6
+      },
+      {
+        "id": "sem-01",
+        "kind": "article_swap",
+        "note": "把「第八百三十二条」（民法典.md）换成「第一千二百零四条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第一千二百零四条",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-01",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-02",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-02",
+        "kind": "distorted_number",
+        "note": "把「八周岁」改成「十八周岁」",
+        "needle": "十八周岁",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-02",
+        "kind": "article_swap",
+        "note": "把「第二十条」（民法典.md）换成「第四百八十七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第四百八十七条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "不满八周岁的未成年人属于无民事行为能力人",
+            "verdict": "supported",
+            "evidence": "第二十条"
+          },
+          {
+            "text": "不满八周岁的孩子自己签署的合同无效",
+            "verdict": "supported",
+            "evidence": "第二十条"
+          },
+          {
+            "text": "所有相关的法律行为必须由其法定代理人进行",
+            "verdict": "supported",
+            "evidence": "第二十条"
+          }
+        ]
+      },
+      {
+        "id": "sem-02",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-03",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-03",
+        "kind": "distorted_number",
+        "note": "把「三年」改成「十年」",
+        "needle": "十年",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-03",
+        "kind": "article_swap",
+        "note": "把「第188条」（民法典.md）换成「第538条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第538条",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-03",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-04",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-04",
+        "kind": "distorted_number",
+        "note": "把「三十日」改成「九十日」",
+        "needle": "九十日",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-04",
+        "kind": "article_swap",
+        "note": "把「第1077条」（民法典.md）换成「第1082条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第1082条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 4,
+        "missedClaims": [
+          {
+            "text": "受理后的撤回申请期限三十日内",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          },
+          {
+            "text": "领取离婚证的时间在前款规定的期限届满后三十日内",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          },
+          {
+            "text": "自愿离婚的登记要求婚姻登记机关查明双方确实自愿离婚",
+            "verdict": "supported",
+            "evidence": "第一千零七十八条"
+          },
+          {
+            "text": "至少需要六十天",
+            "verdict": "supported",
+            "evidence": "第一千零七十七条"
+          }
+        ]
+      },
+      {
+        "id": "sem-04",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-07",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": false,
+        "claims": 2,
+        "missedClaims": [
+          {
+            "text": "被侵权人有权请求精神损害赔偿",
+            "verdict": "supported",
+            "evidence": "第一千一百八十三条"
+          },
+          {
+            "text": "违约行为造成严重精神损害可以要求精神损害赔偿",
+            "verdict": "supported",
+            "evidence": "第九百九十六条"
+          }
+        ]
+      },
+      {
+        "id": "sem-07",
+        "kind": "article_swap",
+        "note": "把「第一千一百八十三条」（民法典.md）换成「第一千一百七十九条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第一千一百七十九条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 2,
+        "missedClaims": [
+          {
+            "text": "侵害自然人人身权益造成严重精神损害的，被侵权人有权请求精神损害赔偿。",
+            "verdict": "supported",
+            "evidence": "第一千一百八十三条"
+          },
+          {
+            "text": "因当事人一方的违约行为，损害对方人格权并造成严重精神损害，受损害方选择请求其承担违约责任的，不影响受损害方请求精神损害赔偿。",
+            "verdict": "supported",
+            "evidence": "第九百九十六条"
+          }
+        ]
+      },
+      {
+        "id": "sem-07",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-08",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": false,
+        "claims": 4,
+        "missedClaims": [
+          {
+            "text": "股东有权查阅公司的会计账簿",
+            "verdict": "supported",
+            "evidence": "第五十七条"
+          },
+          {
+            "text": "股东要求查阅公司会计账簿需提出书面请求",
+            "verdict": "supported",
+            "evidence": "第五十七条"
+          },
+          {
+            "text": "公司需在股东提出书面请求后的十五日内书面回复",
+            "verdict": "supported",
+            "evidence": "第五十七条"
+          },
+          {
+            "text": "股东可以委托会计师事务所、律师事务所查阅",
+            "verdict": "supported",
+            "evidence": "第五十七条"
+          }
+        ]
+      },
+      {
+        "id": "sem-08",
+        "kind": "distorted_number",
+        "note": "把「十五日」改成「六十日」",
+        "needle": "六十日",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-08",
+        "kind": "article_swap",
+        "note": "把「第五十七条」（公司法.md）换成「第二百一十七条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第二百一十七条",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": true,
+        "claims": 6
+      },
+      {
+        "id": "sem-08",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": false,
+        "claims": 5
+      },
+      {
+        "id": "sem-09",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-09",
+        "kind": "article_swap",
+        "note": "把「第二十三条」（公司法.md）换成「第八十六条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第八十六条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 5,
+        "missedClaims": [
+          {
+            "text": "股东滥用公司法人独立地位逃避债务，可能需要承担法律责任",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          },
+          {
+            "text": "公司股东滥用公司法人独立地位和股东有限责任，逃避债务，严重损害公司债权人利益的，应当对公司债务承担连带责任",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          },
+          {
+            "text": "公司不能清偿到期债务的，债权人有权要求股东提前缴纳出资",
+            "verdict": "supported",
+            "evidence": "第五十四条"
+          },
+          {
+            "text": "股东不得抽逃出资，违反规定的应当返还抽逃的出资",
+            "verdict": "supported",
+            "evidence": "第五十三条"
+          },
+          {
+            "text": "债权人可以要求股东对公司的债务承担连带责任",
+            "verdict": "supported",
+            "evidence": "第二十三条"
+          }
+        ]
+      },
+      {
+        "id": "sem-09",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-10",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-10",
+        "kind": "article_swap",
+        "note": "把「第六百八十六条」（民法典.md）换成「第七百条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第七百条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "没有约定保证方式或约定不明确，保证人按一般保证承担责任",
+            "verdict": "supported",
+            "evidence": "第六百八十六条"
+          },
+          {
+            "text": "保证人承担保证责任后，有权向债务人追偿",
+            "verdict": "supported",
+            "evidence": "第七百条"
+          },
+          {
+            "text": "保证人及其追偿不能损害债权人的利益",
+            "verdict": "supported",
+            "evidence": "第七百条"
+          }
+        ]
+      },
+      {
+        "id": "sem-10",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": false,
+        "claims": 4
+      },
+      {
+        "id": "sem-11",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-11",
+        "kind": "article_swap",
+        "note": "把「第十条」（公司法.md）换成「第六十二条」（民法典.md，另一部法）",
+        "needle": "第六十二条",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "not_in_context",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-11",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-12",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-12",
+        "kind": "article_swap",
+        "note": "把「第三百六十八条」（民法典.md）换成「第三百六十七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第三百六十七条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 4,
+        "missedClaims": [
+          {
+            "text": "设立居住权需要办理登记",
+            "verdict": "supported",
+            "evidence": "第三百六十八条"
+          },
+          {
+            "text": "居住权无偿设立",
+            "verdict": "supported",
+            "evidence": "第三百六十八条"
+          },
+          {
+            "text": "居住权自登记时设立",
+            "verdict": "supported",
+            "evidence": "第三百六十八条"
+          },
+          {
+            "text": "未进行登记的居住权不具备法律效力",
+            "verdict": "supported",
+            "evidence": "第三百六十八条"
+          }
+        ]
+      },
+      {
+        "id": "sem-12",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-13",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 12
+      },
+      {
+        "id": "sem-13",
+        "kind": "article_swap",
+        "note": "把「第三百一十一条」（民法典.md）换成「第三百一十七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第三百一十七条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 11,
+        "missedClaims": [
+          {
+            "text": "无处分权人将不动产或者动产转让给受让人的，所有权人有权追回",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "符合下列情形的，受让人取得该不动产或者动产的所有权",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "因出卖人未取得处分权致使标的物所有权不能转移的",
+            "verdict": "supported",
+            "evidence": "第五百九十七条"
+          },
+          {
+            "text": "买受人可以解除合同并请求出卖人承担违约责任",
+            "verdict": "supported",
+            "evidence": "第五百九十七条"
+          },
+          {
+            "text": "受让人只有在以下情况下才能取得所有权",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "受让人在受让时不知悉转让方并没有处分权",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "所支付的价格应当是合理的",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "对于需要登记的不动产，须已完成登记",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "动产则应已经交付给受让人",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "在满足善意、合理价格以及法律要求的条件下，受让人可以合法取得所有权",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          },
+          {
+            "text": "原所有权人有权请求追回该物品，并要求无处分权人承担赔偿责任",
+            "verdict": "supported",
+            "evidence": "第三百一十一条"
+          }
+        ]
+      },
+      {
+        "id": "sem-13",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 6
+      },
+      {
+        "id": "sem-15",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "相对人有理由相信行为人有代理权的，代理行为有效",
+            "verdict": "supported",
+            "evidence": "第一百七十二条"
+          },
+          {
+            "text": "无权代理人以被代理人的名义订立合同，被代理人已经开始履行合同义务或者接受相对人履行的，视为对合同的追认",
+            "verdict": "supported",
+            "evidence": "第五百零三条"
+          },
+          {
+            "text": "只要对方合理相信该代理人有代理权，合同就对所有相关方产生法律效力",
+            "verdict": "supported",
+            "evidence": "第一百七十二条"
+          }
+        ]
+      },
+      {
+        "id": "sem-15",
+        "kind": "article_swap",
+        "note": "把「第172条」（民法典.md）换成「第503条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第503条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 2,
+        "missedClaims": [
+          {
+            "text": "如果对方有理由相信该行为人拥有代理权，该代理行为仍然有效",
+            "verdict": "supported",
+            "evidence": "第一百七十二条"
+          },
+          {
+            "text": "无权代理人以被代理人的名义订立合同，被代理人已经开始履行合同义务或者接受相对人履行的，视为对合同的追认",
+            "verdict": "supported",
+            "evidence": "第五百零三条"
+          }
+        ]
+      },
+      {
+        "id": "sem-15",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "相对人有理由相信行为人有代理权的，代理行为有效",
+            "verdict": "supported",
+            "evidence": "第一百七十二条"
+          },
+          {
+            "text": "无权代理人以被代理人的名义订立合同，被代理人已经开始履行合同义务或者接受相对人履行的，视为对合同的追认",
+            "verdict": "supported",
+            "evidence": "第五百零三条"
+          },
+          {
+            "text": "只要对方合理相信该代理人有代理权，合同就对所有相关方产生法律效力",
+            "verdict": "supported",
+            "evidence": "第一百七十二条"
+          }
+        ]
+      },
+      {
+        "id": "sem-16",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-16",
+        "kind": "article_swap",
+        "note": "把「第四百九十九条」（民法典.md）换成「第三百一十七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第三百一十七条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "悬赏人以公开方式声明支付报酬的，完成该行为的人可以请求其支付。",
+            "verdict": "supported",
+            "evidence": "第四百九十九条"
+          },
+          {
+            "text": "权利人领取遗失物时，应当向拾得人支付保管遗失物等支出的必要费用。",
+            "verdict": "supported",
+            "evidence": "第三百一十七条"
+          },
+          {
+            "text": "若拾得人依据悬赏公告找回失物，法律上他有权要求悬赏人支付承诺的报酬。",
+            "verdict": "supported",
+            "evidence": "第四百九十九条"
+          }
+        ]
+      },
+      {
+        "id": "sem-16",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-17",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": false,
+        "claims": 2,
+        "missedClaims": [
+          {
+            "text": "股东自决议作出之日起六十日内，可以请求人民法院撤销",
+            "verdict": "supported",
+            "evidence": "第二十六条"
+          },
+          {
+            "text": "公司应当向公司登记机关申请撤销根据该决议已办理的登记",
+            "verdict": "supported",
+            "evidence": "第二十八条"
+          }
+        ]
+      },
+      {
+        "id": "sem-17",
+        "kind": "distorted_number",
+        "note": "把「六十日」改成「三十日」",
+        "needle": "三十日",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 2
+      },
+      {
+        "id": "sem-17",
+        "kind": "article_swap",
+        "note": "把「第二十六条」（公司法.md）换成「第二百一十一条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第二百一十一条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "content_mismatch",
+        "needleMatched": false,
+        "claims": 2,
+        "missedClaims": [
+          {
+            "text": "股东自决议作出之日起六十日内，可以请求人民法院撤销该决议",
+            "verdict": "supported",
+            "evidence": "第二十六条"
+          },
+          {
+            "text": "公司需向登记机关申请撤销相关登记",
+            "verdict": "supported",
+            "evidence": "第二十八条"
+          }
+        ]
+      },
+      {
+        "id": "sem-17",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-18",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-18",
+        "kind": "article_swap",
+        "note": "把「第157条」（公司法.md）换成「第163条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第163条",
+        "caught": false,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "股东可以将持有的股份转让给股东以外的人",
+            "verdict": "supported",
+            "evidence": "第一百五十七条"
+          },
+          {
+            "text": "公司不得为他人取得本公司股份提供财务资助",
+            "verdict": "supported",
+            "evidence": "第一百六十三条"
+          },
+          {
+            "text": "股东在转让前应查阅公司的章程规定",
+            "verdict": "supported",
+            "evidence": "第一百五十七条"
+          }
+        ]
+      },
+      {
+        "id": "sem-18",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 3
+      },
+      {
+        "id": "sem-19",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-19",
+        "kind": "article_swap",
+        "note": "把「第五十九条」（公司法.md）换成「第一百一十八条」（公司法.md，同法源但用词重合最低）",
+        "needle": "第一百一十八条",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": true,
+        "claims": 11
+      },
+      {
+        "id": "sem-19",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 12
+      },
+      {
+        "id": "sem-20",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-20",
+        "kind": "article_swap",
+        "note": "把「第十一条」（公司法.md）换成「第六十二条」（民法典.md，另一部法）",
+        "needle": "第六十二条",
+        "caught": false,
+        "citationCaught": true,
+        "citationStatus": "not_in_context",
+        "needleMatched": false,
+        "claims": 3,
+        "missedClaims": [
+          {
+            "text": "法定代表人以公司名义从事的民事活动，其法律后果由公司承担",
+            "verdict": "supported",
+            "evidence": "第十一条"
+          },
+          {
+            "text": "法定代表人因执行职务造成他人损害的，由公司承担民事责任",
+            "verdict": "supported",
+            "evidence": "第十一条"
+          },
+          {
+            "text": "公司可以向有过错的法定代表人追偿",
+            "verdict": "supported",
+            "evidence": "第十一条"
+          }
+        ]
+      },
+      {
+        "id": "sem-20",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 4
+      },
+      {
+        "id": "sem-21",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 6
+      },
+      {
+        "id": "sem-21",
+        "kind": "article_swap",
+        "note": "把「第七百二十五条」（民法典.md）换成「第七百五十七条」（民法典.md，同法源但用词重合最低）",
+        "needle": "第七百五十七条",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": "verified",
+        "needleMatched": true,
+        "claims": 5
+      },
+      {
+        "id": "sem-21",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 6
+      },
+      {
+        "id": "near-02",
+        "kind": "fabricated_cite",
+        "note": "追加引用不存在的第2037条（语料最大条号为 1260）",
+        "needle": "2037",
+        "caught": true,
+        "citationCaught": true,
+        "citationStatus": "fabricated",
+        "needleMatched": true,
+        "claims": 2
+      },
+      {
+        "id": "near-02",
+        "kind": "unsupported_append",
+        "note": "追加无依据断言（关键短语「仲裁前置」不在语料中）",
+        "needle": "仲裁前置",
+        "caught": true,
+        "citationCaught": false,
+        "citationStatus": null,
+        "needleMatched": true,
+        "claims": 2
+      }
+    ]
+  },
+  "stability": {
+    "repeats": 8,
+    "model": "gpt-4o-mini",
+    "rows": [
+      {
+        "id": "lookup-01",
+        "faithA": 1,
+        "faithB": 0.3333333333333333,
+        "claimsA": 3,
+        "claimsB": 6
+      },
+      {
+        "id": "lookup-02",
+        "faithA": 1,
+        "faithB": 0.75,
+        "claimsA": 3,
+        "claimsB": 4
+      },
+      {
+        "id": "lookup-03",
+        "faithA": 1,
+        "faithB": 0.6666666666666666,
+        "claimsA": 4,
+        "claimsB": 3
+      },
+      {
+        "id": "lookup-04",
+        "faithA": 1,
+        "faithB": 1,
+        "claimsA": 4,
+        "claimsB": 3
+      },
+      {
+        "id": "sem-01",
+        "faithA": 1,
+        "faithB": 0.6,
+        "claimsA": 4,
+        "claimsB": 5
+      },
+      {
+        "id": "sem-02",
+        "faithA": 1,
+        "faithB": 0.2,
+        "claimsA": 3,
+        "claimsB": 5
+      },
+      {
+        "id": "sem-03",
+        "faithA": 1,
+        "faithB": 0.75,
+        "claimsA": 3,
+        "claimsB": 4
+      },
+      {
+        "id": "sem-04",
+        "faithA": 1,
+        "faithB": 0.75,
+        "claimsA": 4,
+        "claimsB": 4
+      }
+    ],
+    "meanAbsDelta": 0.36875,
+    "modelBFavors": 0,
+    "modelAFavors": 7,
+    "identical": 1,
+    "meanClaimDelta": 0.75
+  },
   "rows": [
     {
       "id": "lookup-01",
