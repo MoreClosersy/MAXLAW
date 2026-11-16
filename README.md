@@ -500,7 +500,7 @@ which is exactly what makes them fit to fail a build. Generation metrics are not
 `pnpm eval:gate` runs the eval with today's scores as floors:
 
 ```bash
-tsx eval/run.ts --min-hit=1.0 --min-mrr=0.862 \
+tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.963 --min-mrr=0.862 \
   --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0
 ```
 
