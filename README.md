@@ -509,15 +509,18 @@ pnpm index:pack     # index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz
 
 On a cache miss the job downloads
 `releases/download/index-cache/index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`, checks the
-entry count, then saves the restored cache for the next run. The failure also exposed two bugs
+entry count, then saves the restored cache for the next run. The failure also exposed three bugs
 that are now fixed: the save step used `if: always()` and would have cached a **half-built**
-index after a failed `pnpm embed`, and the key ignored the chunker, so a chunking change would
-have re-used an index whose chunk hashes no longer exist. `pnpm test` and `pnpm lint:corpus`
-now run before any embedding work.
+index after a failed `pnpm embed`; the key ignored the chunker, so a chunking change would have
+re-used an index whose chunk hashes no longer exist; and the eval step was not given the secret,
+so even a successful cold build would have failed on the 69 query embeddings in strict mode.
+`pnpm test` and `pnpm lint:corpus` now run before any embedding work.
 
-> Status: the bootstrap path is committed but the workflow has **not yet run green** — the
-> release asset has to be uploaded once, and this machine has no `gh` (the binary is broken)
-> and no Docker, so neither step could be verified locally.
+> **Status (2026-11-16): green, with no secrets.** Run
+> [43871995528](https://github.com/MoreClosersy/MAXLAW/actions/runs/43871995528) started with an
+> empty cache: it downloaded the release asset (step 9), skipped the build (step 10, `skipped`),
+> passed the gate (step 11) and saved the cache (step 12) in **43 s**. The push carrying this
+> paragraph is the first warm-cache run; if it is green, both paths are proven.
 
 
 ## Quick Start
