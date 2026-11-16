@@ -428,7 +428,7 @@ not low ones. The gate is not shipped.
    never told about. The honest experiment is out-of-domain questions from laws the prompt does not
    name.
 2. **One prompt, one judge, temperature 0, one run.** There is no variance estimate. The only
-   stability handle is a different model; that run was done on v1 (below) and not repeated for v2.
+   stability handle is a different model; that run is below (2 disagreements, both over-acceptances).
 3. **The fallback was exercised zero times.** 65/65 calls returned a usable verdict — the good
    outcome — but it means the network-failure and parse-failure branches are covered by unit tests
    only and have never fired on real data. A safety net that has never caught anything is untested
@@ -438,15 +438,15 @@ not low ones. The gate is not shipped.
    that reaches stage 2, and stage 1 skips only 4 of 69. v2's prompt is longer, so the number is
    probably higher — and it is **unmeasured**, which is not the same as unchanged.
 
-**The judge's identity is worth one question out of 42 — measured on v1, not repeated for v2.**
-`--judge-model-b=gpt-4o-mini`: 65
-comparable verdicts, **1 disagreement (0.015)**, and it is an over-acceptance rather than a false
-refusal — `ood-28` ("网购商品七天无理由退货的起算时间怎么算？", a 消费者权益保护法 question) is
-refused by `gpt-4o` and accepted by `gpt-4o-mini`. Out-of-domain refusal goes 42/42 → 41/42;
-in-domain false refusals stay 0/27. One question, in the direction this mechanism exists to
-prevent. Per-token cost is identical because the prompt is identical; the latency difference was
-**not measured** (the first model-B pass lost it to an accounting bug that is now fixed), so it is
-reported as unmeasured rather than estimated.
+**The judge's identity is worth two questions out of 42.** `--judge-model-b=gpt-4o-mini` on the
+v2 prompt: 64 comparable verdicts, **2 disagreements (0.031)**, and both are over-acceptances rather
+than false refusals — `ood-28` ("网购商品七天无理由退货的起算时间怎么算？", a 消费者权益保护法
+question) and `ood-33` ("内幕交易要承担什么法律责任？", a 证券法 question) are refused by `gpt-4o`
+and accepted by `gpt-4o-mini`. Out-of-domain refusal goes 42/42 → **40/42**; in-domain false
+refusals stay 0/27. Both flips point in the direction this mechanism exists to prevent. (v1 had one
+such flip; the schema change did not make the smaller model more conservative.) Per-token cost is
+identical because the prompt is identical; `gpt-4o-mini`'s latency on this run was p50 **2.5 s** /
+p95 4.2 s, while `gpt-4o`'s is unmeasured because its calls came from the cache.
 
 **How to reproduce, and what it will not reproduce.** Cold cache: `pnpm eval:abstention
 --judge-model-b=gpt-4o-mini`, about $0.5 and twelve minutes. Warm cache: the same command, free and
@@ -463,8 +463,8 @@ calls — and **3 of the 23 answerable questions returned two requirements**, in
 公司法#11 + 民法典#61, the cross-law case the schema exists for. Old v1 JSON still parses as a
 single requirement, so older reports replay.
 
-Two things are still v1 and are labelled as such above: the `--judge-model-b` stability run (not
-repeated) and the latency sample. The v2 cold run lost its timings to a report-formatting crash
+One thing is still v1 and labelled as such above: the `gpt-4o` latency sample. The model-B stability
+run has been repeated for v2 (below). The v2 cold run lost its timings to a report-formatting crash
 *after* every judge call had returned — the cache survived, so the rerun was free but by definition
 produced no latency samples. The v2 prompt is ~35% longer (3,589 vs 2,655 characters) and the cold
 run spent **188k prompt + 5.5k completion tokens**.
@@ -888,7 +888,7 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   in-domain falsely refused, zero unusable verdicts out of 65 calls — but the judge prompt
   enumerates the laws the out-of-domain questions come from, so this measures that it applies the
   coverage rule it was given, not that it generalises to laws nobody listed. It is also a single
-  prompt and a single judge at temperature 0 with no variance estimate, it added **4.5 s** of median
+  prompt and a single judge at temperature 0 with no variance estimate, it added **4.5 s** (v1) of median
   latency to every question that reaches it, and its fallback path has never fired on real data.
   The previous version of this bullet said abstention never fired at all; that was true of the
   similarity threshold, which is now only a pre-filter and a fallback. See §Abstention.

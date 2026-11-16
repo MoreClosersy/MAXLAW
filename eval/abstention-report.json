@@ -10,7 +10,7 @@
     "topK": 5,
     "threshold": 0.35,
     "judgeModel": "gpt-4o",
-    "judgeModelB": null,
+    "judgeModelB": "gpt-4o-mini",
     "judgePromptVersion": 2,
     "policy": "both",
     "cases": 69,
@@ -200,20 +200,27 @@
       }
     ]
   },
-  "modelB": null,
+  "modelB": {
+    "model": "gpt-4o-mini",
+    "flips": [
+      "ood-28",
+      "ood-33"
+    ]
+  },
   "cost": {
-    "judgeCalls": 65,
+    "judgeCalls": 130,
     "judgeCallsByModel": {
-      "gpt-4o": 65
+      "gpt-4o": 65,
+      "gpt-4o-mini": 65
     },
     "cacheHits": 65,
     "newTokens": {
-      "prompt": 0,
-      "completion": 0
+      "prompt": 187954,
+      "completion": 6062
     },
     "totalTokensIncludingCacheReplay": {
-      "prompt": 187954,
-      "completion": 5501
+      "prompt": 375908,
+      "completion": 11563
     },
     "latencyMs": {
       "note": "samples 是本轮未命中缓存的调用数；0 表示这一轮没测延迟，不是延迟为 0。要延迟就报冷缓存那一轮",
@@ -222,6 +229,11 @@
           "p50": 0,
           "p95": 0,
           "samples": 0
+        },
+        "gpt-4o-mini": {
+          "p50": 2464,
+          "p95": 4199,
+          "samples": 65
         }
       }
     }
@@ -397,7 +409,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第832条规定了承运人在运输过程中对货物毁损的赔偿责任，而第606条则规定了毁损风险的承担方，这两条共同回答了损失由谁承担的问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 832
+          },
+          {
+            "law": "民法典",
+            "articleNo": 606
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.6522906126110782,
+          0.6351488752429818
+        ],
+        "namedScore": 0.6351488752429818,
+        "cached": false,
+        "latencyMs": 4201,
+        "usage": {
+          "promptTokens": 2808,
+          "completionTokens": 139
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-02",
@@ -436,7 +478,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第二十条规定不满八周岁的未成年人为无民事行为能力人，因此他们签的合同无效；而第十九条则说明八周岁以上的未成年人为限制民事行为能力人，需法定代理人同意。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 20
+          },
+          {
+            "law": "民法典",
+            "articleNo": 19
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": false,
+        "namedScores": [
+          0.6026171085283238,
+          0.6085032505373702
+        ],
+        "namedScore": 0.6026171085283238,
+        "cached": false,
+        "latencyMs": 3553,
+        "usage": {
+          "promptTokens": 2799,
+          "completionTokens": 170
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-03",
@@ -475,7 +547,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第188条规定了请求保护民事权利的诉讼时效为三年，第192条说明了诉讼时效届满后义务人可以提出抗辩，这两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 188
+          },
+          {
+            "law": "民法典",
+            "articleNo": 192
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.6485540288496375,
+          0.6223669499444267
+        ],
+        "namedScore": 0.6223669499444267,
+        "cached": false,
+        "latencyMs": 3638,
+        "usage": {
+          "promptTokens": 2929,
+          "completionTokens": 159
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-04",
@@ -519,7 +621,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第1077条规定了离婚登记申请后的等待期，而第1078条说明了发给离婚证的条件，这两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 1077
+          },
+          {
+            "law": "民法典",
+            "articleNo": 1078
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.6851069038932264,
+          0.65303418515525
+        ],
+        "namedScore": 0.65303418515525,
+        "cached": false,
+        "latencyMs": 3662,
+        "usage": {
+          "promptTokens": 2829,
+          "completionTokens": 172
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-05",
@@ -558,7 +690,34 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第254条规定了在无法确定具体侵权人的情况下，可能加害的建筑物使用人需要给予补偿；第253条则规定了建筑物所有人、管理人或使用人的责任，这两条共同回答了如何处理此类损害的问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 254
+          },
+          {
+            "law": "民法典",
+            "articleNo": 253
+          }
+        ],
+        "binding": "not_in_context",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 5041,
+        "usage": {
+          "promptTokens": 2992,
+          "completionTokens": 230
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "binding_mismatch"
+      }
     },
     {
       "id": "sem-06",
@@ -597,7 +756,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第716条明确规定了承租人可以在出租人同意的情况下转租房屋，第718条则说明了出租人未提出异议的情况下也视为同意，因此这两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 716
+          },
+          {
+            "law": "民法典",
+            "articleNo": 718
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7768067927608459,
+          0.7142160373529415
+        ],
+        "namedScore": 0.7142160373529415,
+        "cached": false,
+        "latencyMs": 2808,
+        "usage": {
+          "promptTokens": 2863,
+          "completionTokens": 147
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-07",
@@ -636,7 +825,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第1183条明确规定了因侵害造成严重精神损害的赔偿权利，第996条进一步说明了在违约情况下也可请求精神损害赔偿，两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 1183
+          },
+          {
+            "law": "民法典",
+            "articleNo": 996
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.768680093692723,
+          0.6972579193397782
+        ],
+        "namedScore": 0.6972579193397782,
+        "cached": false,
+        "latencyMs": 3441,
+        "usage": {
+          "promptTokens": 2883,
+          "completionTokens": 174
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-08",
@@ -675,7 +894,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第五十七条明确规定股东有权查阅公司会计账簿，且第110条进一步规定了持股比例的股东查阅的适用条款，回答了股东查阅会计账簿的权利问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 57
+          },
+          {
+            "law": "公司法",
+            "articleNo": 110
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.663005613001088,
+          0.6567816980382412
+        ],
+        "namedScore": 0.6567816980382412,
+        "cached": false,
+        "latencyMs": 5040,
+        "usage": {
+          "promptTokens": 3122,
+          "completionTokens": 194
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-09",
@@ -714,7 +963,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第二十三条规定股东在滥用公司法人独立地位逃避债务时应对公司债务承担连带责任，第二十四条则赋予债权人要求股东提前缴纳出资的权利，这两条共同回答了债权人能否直接向股东索要债务的问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 23
+          },
+          {
+            "law": "公司法",
+            "articleNo": 54
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.6281052553463162,
+          0.5992403700434551
+        ],
+        "namedScore": 0.5992403700434551,
+        "cached": false,
+        "latencyMs": 4168,
+        "usage": {
+          "promptTokens": 2888,
+          "completionTokens": 203
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-10",
@@ -753,7 +1032,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第686条明确规定了在保证合同中没有约定保证方式时，保证人应按照一般保证承担责任，因此可以直接回答用户的问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 686
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7570600900941901
+        ],
+        "namedScore": 0.7570600900941901,
+        "cached": false,
+        "latencyMs": 2610,
+        "usage": {
+          "promptTokens": 2817,
+          "completionTokens": 92
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-11",
@@ -792,7 +1096,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第十条明确规定法定代表人由董事或经理担任，民法典第六十一条进一步说明法定代表人的身份由法律或章程规定，两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 10
+          },
+          {
+            "law": "民法典",
+            "articleNo": 61
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7380480991969389,
+          0.6784974598813787
+        ],
+        "namedScore": 0.6784974598813787,
+        "cached": false,
+        "latencyMs": 3919,
+        "usage": {
+          "promptTokens": 2818,
+          "completionTokens": 157
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-12",
@@ -831,7 +1165,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第三百六十八条明确规定设立居住权需要向登记机构申请登记，因此回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 368
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7692412282504438
+        ],
+        "namedScore": 0.7692412282504438,
+        "cached": false,
+        "latencyMs": 3321,
+        "usage": {
+          "promptTokens": 2761,
+          "completionTokens": 93
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-13",
@@ -870,7 +1229,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第311条明确规定了在无处分权人转让财物时，受让人取得所有权的条件，包括善意、合理价格和必要的交付或登记。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 311
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": false,
+        "namedScores": [
+          0.6559436663692816
+        ],
+        "namedScore": 0.6559436663692816,
+        "cached": false,
+        "latencyMs": 3629,
+        "usage": {
+          "promptTokens": 3021,
+          "completionTokens": 149
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-14",
@@ -909,7 +1293,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第145条明确规定了限制民事行为能力人实施的民事法律行为的效力认定，结合第143条的有效条件，完整回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 145
+          },
+          {
+            "law": "民法典",
+            "articleNo": 143
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": false,
+        "namedScores": [
+          0.7748366272944104,
+          0.7513306451375583
+        ],
+        "namedScore": 0.7513306451375583,
+        "cached": false,
+        "latencyMs": 3878,
+        "usage": {
+          "promptTokens": 2946,
+          "completionTokens": 189
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-15",
@@ -948,7 +1362,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第172条规定了在相对人有理由相信代理人有代理权的情况下，代理行为有效；第503条则说明无权代理人在特定情况下合同的追认效力，这两条共同回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 172
+          },
+          {
+            "law": "民法典",
+            "articleNo": 503
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.708550160013194,
+          0.7298441233500595
+        ],
+        "namedScore": 0.708550160013194,
+        "cached": false,
+        "latencyMs": 3867,
+        "usage": {
+          "promptTokens": 2773,
+          "completionTokens": 194
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-16",
@@ -987,7 +1431,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第317条规定权利人应当按照承诺履行义务，第499条则明确完成特定行为的人可以请求支付报酬，这两条共同回答了悬赏寻找失物后是否可以要求支付报酬的问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 317
+          },
+          {
+            "law": "民法典",
+            "articleNo": 499
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.651565330357454,
+          0.6267826140755925
+        ],
+        "namedScore": 0.6267826140755925,
+        "cached": false,
+        "latencyMs": 3581,
+        "usage": {
+          "promptTokens": 2777,
+          "completionTokens": 175
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-17",
@@ -1026,7 +1500,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第二十六条规定股东可以请求撤销违反公司章程的决议，第二十五条则明确此类决议无效，二者共同回答了股东的救济方式。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 26
+          },
+          {
+            "law": "公司法",
+            "articleNo": 25
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7471769194934716,
+          0.738591344881952
+        ],
+        "namedScore": 0.738591344881952,
+        "cached": false,
+        "latencyMs": 3085,
+        "usage": {
+          "promptTokens": 2903,
+          "completionTokens": 128
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-18",
@@ -1065,7 +1569,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第一百五十七条明确规定股份有限公司的股东可以将股份转让给股东以外的人，前提是遵循公司章程的相关规定。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 157
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7890397728987967
+        ],
+        "namedScore": 0.7890397728987967,
+        "cached": false,
+        "latencyMs": 3159,
+        "usage": {
+          "promptTokens": 3145,
+          "completionTokens": 117
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-19",
@@ -1104,7 +1633,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第五十九条详细列出了股东会的职权，直接回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 59
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": false,
+        "namedScores": [
+          0.7243658710086788
+        ],
+        "namedScore": 0.7243658710086788,
+        "cached": false,
+        "latencyMs": 4199,
+        "usage": {
+          "promptTokens": 3136,
+          "completionTokens": 184
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-20",
@@ -1148,7 +1702,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第十一条和民法典第六十一条均明确规定法定代表人以公司或法人名义从事民事活动的法律后果由公司或法人承担，直接回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 11
+          },
+          {
+            "law": "民法典",
+            "articleNo": 61
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.81735563179005,
+          0.7328918939350297
+        ],
+        "namedScore": 0.7328918939350297,
+        "cached": false,
+        "latencyMs": 3755,
+        "usage": {
+          "promptTokens": 2823,
+          "completionTokens": 153
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "sem-21",
@@ -1187,7 +1771,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第725条明确规定租赁物在承租人占有期间发生所有权变动不影响租赁合同的效力，直接回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 725
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.8587381927017219
+        ],
+        "namedScore": 0.8587381927017219,
+        "cached": false,
+        "latencyMs": 2769,
+        "usage": {
+          "promptTokens": 2796,
+          "completionTokens": 108
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "near-01",
@@ -1226,7 +1835,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第960条明确规定行纪合同没有规定的情况下应参照适用委托合同的有关规定，直接回答了问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 960
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.8634037102638533
+        ],
+        "namedScore": 0.8634037102638533,
+        "cached": false,
+        "latencyMs": 2525,
+        "usage": {
+          "promptTokens": 2667,
+          "completionTokens": 90
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "near-02",
@@ -1265,7 +1899,32 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第966条明确规定中介合同没有规定的情况下应参照适用委托合同的有关规定，因此能够直接回答问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 966
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.8459890094619363
+        ],
+        "namedScore": 0.8459890094619363,
+        "cached": false,
+        "latencyMs": 2306,
+        "usage": {
+          "promptTokens": 2624,
+          "completionTokens": 80
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-01",
@@ -1297,7 +1956,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及违约责任和损失赔偿，但没有具体规定劳动合同被违法解除后的经济补偿金计算方法。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2998,
+        "usage": {
+          "promptTokens": 3003,
+          "completionTokens": 62
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-02",
@@ -1329,7 +2006,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与专利申请的创造性标准无关，缺乏相关法律规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2433,
+        "usage": {
+          "promptTokens": 3016,
+          "completionTokens": 52
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-03",
@@ -1361,7 +2056,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及机动车交通事故的赔偿责任，但没有涉及醉酒驾驶的具体处罚规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 1979,
+        "usage": {
+          "promptTokens": 2892,
+          "completionTokens": 53
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-04",
@@ -1393,7 +2106,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及侵权责任和损害赔偿，但没有关于故意伤害致人重伤的刑事责任的规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2639,
+        "usage": {
+          "promptTokens": 2864,
+          "completionTokens": 63
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-05",
@@ -1425,7 +2156,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与试用期的约定无关，无法回答试用期最长可以约定多久的问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 1963,
+        "usage": {
+          "promptTokens": 2791,
+          "completionTokens": 56
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-06",
@@ -1457,7 +2206,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及加班费的支付标准，问题所需的相关规定不在民法典中。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 3226,
+        "usage": {
+          "promptTokens": 2960,
+          "completionTokens": 54
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-07",
@@ -1489,7 +2256,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与劳动合同相关的规定缺失，无法回答劳动者未签订书面劳动合同是否可以主张二倍工资的问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2076,
+        "usage": {
+          "promptTokens": 2770,
+          "completionTokens": 64
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-08",
@@ -1521,7 +2306,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及女职工在孕期被辞退的相关规定，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2464,
+        "usage": {
+          "promptTokens": 2786,
+          "completionTokens": 57
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-09",
@@ -1553,7 +2356,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有明确规定劳动争议申请仲裁的时效期间，相关规定不在本库内。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2440,
+        "usage": {
+          "promptTokens": 2878,
+          "completionTokens": 57
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-10",
@@ -1585,7 +2406,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与盗窃罪的刑事责任无关，无法回答关于盗窃他人财物数额较大的判刑问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2325,
+        "usage": {
+          "promptTokens": 2892,
+          "completionTokens": 61
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-11",
@@ -1617,7 +2456,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的最接近条文是民法典第181条，但它分配的是民事责任；问题问的是刑事责任。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2277,
+        "usage": {
+          "promptTokens": 2722,
+          "completionTokens": 70
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-12",
@@ -1649,7 +2506,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及民事责任和赔偿问题，并未涉及交通肇事逃逸致人死亡的法定刑问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2313,
+        "usage": {
+          "promptTokens": 2756,
+          "completionTokens": 70
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-13",
@@ -1681,7 +2556,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与监护相关，未涉及取保候审的适用条件。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2292,
+        "usage": {
+          "promptTokens": 3122,
+          "completionTokens": 55
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-14",
@@ -1713,7 +2606,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与诈骗罪的量刑无关，无法提供相关法律依据。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2053,
+        "usage": {
+          "promptTokens": 2786,
+          "completionTokens": 47
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-15",
@@ -1745,7 +2656,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与商标注册申请复审的时间规定无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2141,
+        "usage": {
+          "promptTokens": 3044,
+          "completionTokens": 55
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-16",
@@ -1777,7 +2706,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及发明专利权的保护期限，相关规定不在本库内。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2442,
+        "usage": {
+          "promptTokens": 2972,
+          "completionTokens": 57
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-17",
@@ -1809,7 +2756,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及技术合同和职务技术成果的使用权，但没有明确规定职务发明的专利权归属问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2037,
+        "usage": {
+          "promptTokens": 3045,
+          "completionTokens": 62
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-18",
@@ -1841,7 +2806,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及著作权保护期的相关规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2162,
+        "usage": {
+          "promptTokens": 2930,
+          "completionTokens": 48
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-19",
@@ -1873,7 +2856,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与诉讼时效相关，但没有涉及上诉期的具体规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2140,
+        "usage": {
+          "promptTokens": 3050,
+          "completionTokens": 52
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-20",
@@ -1905,7 +2906,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及诉讼时效的相关规定，但没有明确说明申请强制执行的具体期限。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2056,
+        "usage": {
+          "promptTokens": 2982,
+          "completionTokens": 53
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-21",
@@ -1937,7 +2956,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文涉及担保的规定，但没有明确说明民事诉讼中申请财产保全是否需要提供担保。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2333,
+        "usage": {
+          "promptTokens": 2987,
+          "completionTokens": 65
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-22",
@@ -1969,7 +3006,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均涉及诉讼时效的规定，但没有关于行政复议申请期限的相关内容。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2347,
+        "usage": {
+          "promptTokens": 3052,
+          "completionTokens": 58
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-23",
@@ -2001,7 +3056,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与行政机关处罚及听证权无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 1945,
+        "usage": {
+          "promptTokens": 2760,
+          "completionTokens": 50
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-24",
@@ -2033,7 +3106,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与行政拘留无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 1961,
+        "usage": {
+          "promptTokens": 2773,
+          "completionTokens": 49
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-25",
@@ -2065,7 +3156,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与个人所得税的税率无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2139,
+        "usage": {
+          "promptTokens": 3105,
+          "completionTokens": 50
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-26",
@@ -2097,7 +3206,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与增值税小规模纳税人的征收率无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2300,
+        "usage": {
+          "promptTokens": 2806,
+          "completionTokens": 57
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-27",
@@ -2129,7 +3256,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及公司法中的虚假行为和法律责任，但没有具体针对虚开增值税专用发票的法律责任规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2644,
+        "usage": {
+          "promptTokens": 2906,
+          "completionTokens": 74
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-28",
@@ -2161,7 +3306,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "民法典第二百零一条规定了期间计算的起算规则，而第五百一十二条明确了网购商品的交付时间为收货人的签收时间，这两条共同回答了七天无理由退货的起算时间问题。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "民法典",
+            "articleNo": 201
+          },
+          {
+            "law": "民法典",
+            "articleNo": 512
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.6240349261228605,
+          0.5685190915347956
+        ],
+        "namedScore": 0.5685190915347956,
+        "cached": false,
+        "latencyMs": 3473,
+        "usage": {
+          "promptTokens": 2987,
+          "completionTokens": 135
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-29",
@@ -2193,7 +3368,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及经营者欺诈消费者的惩罚性赔偿倍数的问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2222,
+        "usage": {
+          "promptTokens": 2802,
+          "completionTokens": 59
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-30",
@@ -2225,7 +3418,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有明确规定关于十倍赔偿的内容，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2084,
+        "usage": {
+          "promptTokens": 2855,
+          "completionTokens": 50
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-31",
@@ -2257,7 +3468,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均涉及机动车交通事故责任，但没有关于闯红灯的罚款和记分标准的规定。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2422,
+        "usage": {
+          "promptTokens": 2892,
+          "completionTokens": 67
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-32",
@@ -2289,7 +3518,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文主要涉及交通事故的赔偿责任，并未涉及驾驶证的处理问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2239,
+        "usage": {
+          "promptTokens": 2849,
+          "completionTokens": 54
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-33",
@@ -2321,7 +3568,37 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "公司法第二百三十七条规定了公司财产不足以清偿债务时应申请破产清算的条件，第二百四十二条则说明了破产后的清算程序，这两条共同回答了债权人申请破产的条件。",
+        "answerable": true,
+        "requirements": [
+          {
+            "law": "公司法",
+            "articleNo": 237
+          },
+          {
+            "law": "公司法",
+            "articleNo": 242
+          }
+        ],
+        "binding": "in_context",
+        "quoteVerified": true,
+        "namedScores": [
+          0.7106995040548967,
+          0.651040752706749
+        ],
+        "namedScore": 0.651040752706749,
+        "cached": false,
+        "latencyMs": 3732,
+        "usage": {
+          "promptTokens": 2875,
+          "completionTokens": 169
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-34",
@@ -2353,7 +3630,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及内幕交易的法律责任，相关规定不在本库内。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2180,
+        "usage": {
+          "promptTokens": 2812,
+          "completionTokens": 52
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-35",
@@ -2385,7 +3680,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文未涉及投保人违反如实告知义务的相关规定，无法回答保险人是否可以解除合同的问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2335,
+        "usage": {
+          "promptTokens": 2991,
+          "completionTokens": 65
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-36",
@@ -2417,7 +3730,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文未涉及企业超标排放污染物的具体处罚，相关规定不在本库内。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2191,
+        "usage": {
+          "promptTokens": 2744,
+          "completionTokens": 57
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-37",
@@ -2449,7 +3780,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文没有涉及违法收集个人信息的罚款规定，相关的法律责任不在本库内。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2867,
+        "usage": {
+          "promptTokens": 3013,
+          "completionTokens": 58
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-38",
@@ -2481,7 +3830,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文未涉及工伤赔偿私了协议的反悔问题，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2146,
+        "usage": {
+          "promptTokens": 2812,
+          "completionTokens": 56
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-39",
@@ -2513,7 +3880,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与天气无关，无法回答关于天气的问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 3308,
+        "usage": {
+          "promptTokens": 2972,
+          "completionTokens": 43
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-40",
@@ -2545,7 +3930,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与番茄炒蛋的做法无关，无法回答该问题。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2410,
+        "usage": {
+          "promptTokens": 2827,
+          "completionTokens": 52
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-41",
@@ -2577,7 +3980,25 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文与 TypeScript 数组去重无关，无法提供相关法律依据。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2838,
+        "usage": {
+          "promptTokens": 2897,
+          "completionTokens": 50
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     },
     {
       "id": "ood-42",
@@ -2609,8 +4030,26 @@
         "promptVersion": 2,
         "outcome": "judged"
       },
-      "judgeB": null
+      "judgeB": {
+        "skipReason": null,
+        "reason": "检索到的条文均与法律相关，但没有涉及关于世界最高山峰的信息。",
+        "answerable": false,
+        "requirements": [],
+        "binding": "not_applicable",
+        "quoteVerified": null,
+        "namedScores": [],
+        "namedScore": null,
+        "cached": false,
+        "latencyMs": 2521,
+        "usage": {
+          "promptTokens": 2856,
+          "completionTokens": 47
+        },
+        "model": "gpt-4o-mini",
+        "promptVersion": 2,
+        "outcome": "judged"
+      }
     }
   ],
-  "generatedAt": "2026-11-16T13:25:04.400Z"
+  "generatedAt": "2026-11-16T13:29:51.355Z"
 }
