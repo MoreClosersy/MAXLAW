@@ -82,6 +82,15 @@ export default class VectorStore {
         return this.seenHashes.has(hash);
     }
 
+    /**
+     * 语料里是否有文件名包含该法律名的来源（如「民法典」→ 民法典.md）。
+     * 引用校验器用它区分"库外法律"与"这部法在库里、只是没有这一条"——
+     * 前者维持旧语义，后者要判 fabricated。
+     */
+    hasSource(name: string): boolean {
+        return this.vectorStore.some(item => item.source.includes(name));
+    }
+
     async addEmbedding(embedding: number[], chunk: ParsedChunk) {
         // 维度断言：维度不一致的向量进了库，cosineSimilarity 会静默错序甚至算出 NaN，
         // 而且很难排查（表现为"检索结果看着不相关"而不是报错）。宁可在入库这一刻就拒绝。

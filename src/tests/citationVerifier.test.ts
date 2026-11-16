@@ -172,3 +172,114 @@ test('摘要文案区分两种失败原因', async () => {
     assert.match(s, /不存在/, '编造的要说"不存在"');
     assert.match(s, /未出现在检索结果中/, '凭记忆引用的要说"未出现在检索结果中"');
 });
+
+// ---------------------------------------------------------------------------
+// 跨法同名条：只按条号匹配会把「凭记忆引用」判成通过
+//
+// 民法典和公司法都有第二十三条。旧实现只看条号在不在 context 里，所以答案写
+// 「公司法第二十三条」、而上下文只有民法典第二十三条时，会报 verified ——
+// 用户以为这条经过检索，其实没有。这一组把 (法, 条号) 绑在一起。
+// ---------------------------------------------------------------------------
+
+test('点名了法：上下文只有另一部法的同名条 → not_in_context，不是 verified', async () => {
+    const store = await makeStore([
+        { articleNo: '第二十三条', source: '民法典.md' },
+        { articleNo: '第二十三条', source: '公司法.md' },
+    ]);
+    const retrieved = [chunk('第二十三条', '民法典.md', '第二十三条 民事主体……')];
+
+    const report = verifyCitations('依据公司法第二十三条，股东滥用法人独立地位的……', store, retrieved);
+
+    const c = find(report, 23)!;
+    assert.equal(c.law, '公司法');
+    assert.equal(c.status, 'not_in_context', '跨法的同名条不算是同一条');
+    assert.equal(c.exists, true, '公司法#23 在语料里确实存在');
+    assert.equal(c.inContext, false);
+    assert.deepEqual(c.foundIn, []);
+});
+
+test('点名了法：该法同名条也在 context 里 → verified，且 foundIn 只记那部法', async () => {
+    const store = await makeStore([
+        { articleNo: '第二十三条', source: '民法典.md' },
+        { articleNo: '第二十三条', source: '公司法.md' },
+    ]);
+    const retrieved = [
+        chunk('第二十三条', '民法典.md', '第二十三条 民事主体……'),
+        chunk('第二十三条', '公司法.md', '第二十三条 公司股东滥用……'),
+    ];
+
+    const report = verifyCitations('依据公司法第二十三条……', store, retrieved);
+
+    const c = find(report, 23)!;
+    assert.equal(c.status, 'verified');
+    assert.deepEqual(c.foundIn, ['公司法.md']);
+});
+
+test('同一答案里两条引用分属两部法：各认各的，不互相串味', async () => {
+    const store = await makeStore([
+        { articleNo: '第五百七十七条', source: '民法典.md' },
+        { articleNo: '第二十三条', source: '公司法.md' },
+    ]);
+    const retrieved = [
+        chunk('第五百七十七条', '民法典.md', '第五百七十七条 当事人一方不履行……'),
+        chunk('第二十三条', '公司法.md', '第二十三条 公司股东滥用……'),
+    ];
+
+    const report = verifyCitations(
+        '《民法典》第五百七十七条规定违约责任；《公司法》第二十三条规定法人人格否认。',
+        store, retrieved,
+    );
+
+    assert.equal(report.total, 2);
+    assert.equal(report.verified, 2);
+    const byNo = new Map(report.checks.map(c => [c.articleNo, c]));
+    assert.equal(byNo.get(577)!.law, '民法典');
+    assert.equal(byNo.get(23)!.law, '公司法');
+});
+
+test('没点名法律 + 条号跨法：仍按旧语义判 verified，但标出 ambiguousLaw', async () => {
+    const store = await makeStore([
+        { articleNo: '第二十三条', source: '民法典.md' },
+        { articleNo: '第二十三条', source: '公司法.md' },
+    ]);
+    const retrieved = [chunk('第二十三条', '民法典.md', '第二十三条 民事主体……')];
+
+    const report = verifyCitations('依据第二十三条……', store, retrieved);
+
+    const c = find(report, 23)!;
+    assert.equal(c.law, null);
+    assert.equal(c.status, 'verified');
+    assert.equal(c.ambiguousLaw, true, '条号跨法时 verified 的把握更小，要能看见');
+});
+
+test('点名了法：该法在库里、但没有这一条 → fabricated（条号在别的法里存在也不算）', async () => {
+    const store = await makeStore([
+        { articleNo: '第十一条', source: '公司法.md' },
+        { articleNo: '第九十九条', source: '民法典.md' },   // 号码存在，但不在公司法
+    ]);
+    const retrieved = [chunk('第十一条', '公司法.md', '第十一条 法定代表人……')];
+
+    const report = verifyCitations('依据公司法第九十九条……', store, retrieved);
+
+    const c = find(report, 99)!;
+    assert.equal(c.law, '公司法');
+    assert.equal(c.status, 'fabricated');
+    assert.equal(c.exists, false);
+});
+
+test('法名在上一句：不会把下一句的引用绑过去', async () => {
+    const store = await makeStore([
+        { articleNo: '第五百七十七条', source: '民法典.md' },
+        { articleNo: '第二十三条', source: '公司法.md' },
+    ]);
+    const retrieved = [chunk('第二十三条', '公司法.md', '第二十三条 公司股东滥用……')];
+
+    const report = verifyCitations(
+        '《民法典》第五百七十七条讲了违约责任。另见第二十三条。',
+        store, retrieved,
+    );
+
+    const c = find(report, 23)!;
+    assert.equal(c.law, null, '第二十三条在另一个分句里，没有点名法律');
+    assert.equal(c.status, 'verified');
+});

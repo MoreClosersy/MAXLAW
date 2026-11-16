@@ -292,8 +292,8 @@ function CitationCheckBlock({ report }) {
           <li key={i}>
             <code>{c.label}</code>
             {c.status === 'fabricated'
-              ? ' —— 本地法条库中不存在此条号，请勿直接采信'
-              : ` —— 条号确实存在（${c.sources.join('、')}），但未出现在本次检索结果中，属于凭记忆引用`}
+              ? (c.law ? ` —— ${c.law}中不存在此条号，请勿直接采信` : ' —— 本地法条库中不存在此条号，请勿直接采信')
+              : ` —— ${c.law ? `${c.law}中` : ''}条号确实存在（${c.sources.join('、')}），但未出现在本次检索结果中，属于凭记忆引用`}
           </li>
         ))}
       </ul>

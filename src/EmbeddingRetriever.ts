@@ -2,6 +2,7 @@ import { logTitle } from "./utils.js";
 import VectorStore, { RetrievedChunk, QuerySignals, ensureLawCoverage } from "./VectorStore.js";
 import { RERANK_CANDIDATES, partitionPinned, RerankerLike } from "./Reranker.js";
 import { cnToNumber } from "./articleNo.js";
+import { findLaws, type LawMention } from "./laws.js";
 import { CACHE_DIR } from "./paths.js";
 import 'dotenv/config';
 import fs from 'fs';
@@ -797,15 +798,6 @@ function chapterPrefix(chapter: string | null): string | null {
     return kept.join(' > ') || null;
 }
 
-/** 语料里可能出现的法律名。命中后作为 **source 过滤信号**，不再当正文字符串用。 */
-const KNOWN_LAW_NAMES = [
-    '民法典', '合同法', '公司法', '劳动法', '知识产权', '刑法',
-    '行政法', '婚姻法', '继承法', '侵权责任法', '消费者权益保护法',
-];
-
-/** 长名优先：当前列表没有前缀重叠，但别把这一点当巧合依赖。 */
-const LAW_NAME_RE = new RegExp([...KNOWN_LAW_NAMES].sort((a, b) => b.length - a.length).join('|'), 'g');
-
 /** 查询里的条号（含中文数字），与 articleNo.ts 的 CITATION_RE 保持同一套写法。 */
 const QUERY_ARTICLE_RE = /第\s*([0-9]+|[一二三四五六七八九十百千万零两]+)\s*条/g;
 
@@ -817,12 +809,6 @@ const CLAUSE_BOUNDARY = /[。；;！!？?\n]/g;
 
 /** 两个法律名之间允许出现的并列符；出现别的词就说明它们不是并列关系。 */
 const COORDINATION_ONLY = /^[\s和与及、,，/]*$/;
-
-interface LawMention {
-    name: string;
-    start: number;
-    end: number;
-}
 
 /** 找出管辖某个条号的法律名：同分句内、条号之前最近的那个；并列的法律名一起管。 */
 function lawsGoverning(query: string, laws: LawMention[], numberStart: number): string[] {
@@ -873,11 +859,9 @@ function dedupePairs(pairs: { law: string; articleNo: number }[]) {
  * 置顶——用户点名了条号，那就是查找，不该因为没有法律名而降级。
  */
 export function parseQuery(query: string): QuerySignals {
-    const laws: LawMention[] = [...query.matchAll(LAW_NAME_RE)].map(m => ({
-        name: m[0],
-        start: m.index ?? 0,
-        end: (m.index ?? 0) + m[0].length,
-    }));
+    // 法律名的识别与归一和引用校验器共用一份（src/laws.ts）：两边各写一份，
+    // 症状是「民法典.md」在检索侧算民法典、在校验侧不算。
+    const laws: LawMention[] = findLaws(query);
     const lawNames = [...new Set(laws.map(l => l.name))];
     const numbers = [...query.matchAll(QUERY_ARTICLE_RE)]
         .map(m => ({ articleNo: cnToNumber(m[1]), start: m.index ?? 0 }))

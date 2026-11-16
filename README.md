@@ -30,9 +30,13 @@ and the replacement is held to the same standard.
 - **Citation verification.** Every 第X条 the model cites is looked up in the store
   *numerically* — 「第577条」and「第五百七十七条」are the same article — and classified
   `verified`, `not_in_context` (a real article, but cited from memory rather than from what
-  was actually retrieved), or `fabricated`. The UI renders the report and the server logs a
-  warning. Nothing is auto-corrected: a silently rewritten citation is harder to audit than
-  a flagged one.
+  was actually retrieved), or `fabricated`. When the answer names the law next to the
+  citation, the lookup is scoped to **(law, article)**: a same-numbered article from the
+  *other* law being in context no longer counts as verified — 民法典 and 公司法 both have a
+  第二十三条, and the old number-only check called 「公司法第二十三条」verified when only
+  民法典#23 had been retrieved. The UI renders the report and the server logs a warning.
+  Nothing is auto-corrected: a silently rewritten citation is harder to audit than a flagged
+  one.
 - **No fabricated cases.** The system prompt (`prompts/legal-system-prompt.v3.md`) forbids
   presenting any case as real, because the corpus contains statute text only. Hypotheticals
   must be explicitly labelled as such.

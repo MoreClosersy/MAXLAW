@@ -238,8 +238,8 @@ export async function runQuery(opts: QueryOptions): Promise<QueryResult> {
             console.warn(
                 `[citation]   ${c.label}（原文「${c.raw}」）` +
                 (c.status === 'fabricated'
-                    ? ' —— 语料中不存在此条号'
-                    : ` —— 条号真实存在（${c.sources.join('、')}），但未出现在本次检索结果中`)
+                    ? (c.law ? ` —— ${c.law}中不存在此条号` : ' —— 语料中不存在此条号')
+                    : ` —— ${c.law ? `${c.law}中` : ''}条号真实存在（${c.sources.join('、')}），但未出现在本次检索结果中`)
             );
         }
     }
