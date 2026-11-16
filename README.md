@@ -516,11 +516,13 @@ re-used an index whose chunk hashes no longer exist; and the eval step was not g
 so even a successful cold build would have failed on the 69 query embeddings in strict mode.
 `pnpm test` and `pnpm lint:corpus` now run before any embedding work.
 
-> **Status (2026-11-16): green, with no secrets.** Run
-> [43871995528](https://github.com/MoreClosersy/MAXLAW/actions/runs/43871995528) started with an
-> empty cache: it downloaded the release asset (step 9), skipped the build (step 10, `skipped`),
-> passed the gate (step 11) and saved the cache (step 12) in **43 s**. The push carrying this
-> paragraph is the first warm-cache run; if it is green, both paths are proven.
+> **Status (2026-11-16): both cache paths green, no secrets involved.**
+> Cold run [43871995528](https://github.com/MoreClosersy/MAXLAW/actions/runs/43871995528):
+> empty cache → downloaded the release asset (step 9), skipped the build (step 10), passed the
+> gate (step 11), saved the cache (step 12) — **43 s**.
+> Warm run [43872210014](https://github.com/MoreClosersy/MAXLAW/actions/runs/43872210014):
+> restored the saved cache (step 8); download, build and save all `skipped`, gate passed —
+> **32 s**. Both runs used the public release asset; neither needed an Actions secret.
 
 
 ## Quick Start
