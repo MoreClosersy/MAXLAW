@@ -33,10 +33,19 @@
  */
 
 import VectorStore, { RetrievedChunk } from './VectorStore.js';
-import { cnToNumber, extractArticleNumbers } from './articleNo.js';
+import { cnToNumber, extractArticleNumbers, parseArticleNo } from './articleNo.js';
 import { findLaws, normLawName, type LawMention } from './laws.js';
 
-export type CitationStatus = 'verified' | 'not_in_context' | 'fabricated';
+/**
+ * `content_mismatch` —— 条号真实、也确实在检索结果里，但**引用旁边那段话不像这一条说的**：
+ * 它与另一条被检索到的条文重合得多得多。这是 "article_swap"（条号真、内容错）的确定性抓手，
+ * faithfulness 判官在注入测试里只抓到 7/22，而这个检查不需要模型。
+ *
+ * 它只能抓"句子里有实质内容、且那些内容明显属于另一条"的情形；标题式引用、
+ * 纯列举、以及"参见/另见"式指针不会触发（没有足够文本可判）。所以它是**补强**，
+ * 不是替代判官：校准见 README §Faithfulness 与 `pnpm eval:citations`。
+ */
+export type CitationStatus = 'verified' | 'not_in_context' | 'fabricated' | 'content_mismatch';
 
 export interface CitationCheck {
     /** 模型原文写法，如「第一百一十条」——保留它是因为模型偶尔会用非常规写法 */
@@ -63,6 +72,12 @@ export interface CitationCheck {
      * 只让读日志的人知道这条 verified 的把握比别的小。
      */
     ambiguousLaw: boolean;
+    /**
+     * 内容绑定诊断：引用所在句与被引条文的二元组覆盖率（own），以及同一句与**其它**
+     * 检索结果的最高覆盖率（bestOther）。只在 `verified` 的条目上计算；其余为 null。
+     * 判定规则见 `CONTENT_*` 常量，校准数字见 README。
+     */
+    contentOverlap: { own: number; bestOther: number } | null;
 }
 
 export interface CitationReport {
@@ -71,7 +86,8 @@ export interface CitationReport {
     verified: number;
     notInContext: number;
     fabricated: number;
-    /** 只要出现任一 fabricated / not_in_context 即为 true */
+    contentMismatch: number;
+    /** 只要出现任一非 verified 的条目即为 true */
     hasProblem: boolean;
 }
 
@@ -128,6 +144,8 @@ interface CitationOccurrence {
     articleNo: number;
     raw: string;
     law: string | null;
+    /** 引用所在的整句（分句边界见 CLAUSE_BOUNDARY），用于内容绑定检查 */
+    sentence: string;
 }
 
 /**
@@ -136,19 +154,70 @@ interface CitationOccurrence {
  * 用"最近的前置"而不是"全文任意法名"：答案常写成「《民法典》……；《公司法》……」，
  * 按全文取会让后一条引用错绑到前一部法，反而制造假告警。
  */
+/** 引用所在整句：从上一个分句边界到下一个分句边界。 */
+function sentenceAround(text: string, position: number): string {
+    let start = 0;
+    for (const m of text.slice(0, position).matchAll(CLAUSE_BOUNDARY)) {
+        start = (m.index ?? 0) + m[0].length;
+    }
+    const boundary = new RegExp(CLAUSE_BOUNDARY.source, 'g');
+    boundary.lastIndex = position;
+    const end = boundary.exec(text)?.index ?? text.length;
+    return text.slice(start, end);
+}
+
 function extractCitations(text: string): CitationOccurrence[] {
     const laws = findLaws(text);
     const out: CitationOccurrence[] = [];
     for (const m of text.matchAll(ARTICLE_RE)) {
         const n = cnToNumber(m[1]);
         if (!Number.isFinite(n) || n <= 0) continue;
+        const position = m.index ?? 0;
         out.push({
             articleNo: n,
             raw: m[0].replace(/\s+/g, ''),
-            law: governingLaw(text, laws, m.index ?? 0),
+            law: governingLaw(text, laws, position),
+            sentence: sentenceAround(text, position),
         });
     }
     return out;
+}
+
+// ---------------------------------------------------------------------------
+// 内容绑定：引用旁边那句话，到底更像哪一条？
+//
+// 这是 "条号真、内容错"（faithfulness 的 article_swap）的确定性抓手。核心不是
+// "和所引条文重合低就报警"——法律答案大量是改写，低重合是常态，那样会产生成片误报。
+// 只有当**同一句话与另一条被检索到的条文重合得多得多**时才报：
+// 那说明内容属于另一条，条号被张冠李戴了。
+//
+// 阈值来自 27 条真实答案（68 处引用）+ 25 个注入的跨法换号样本：
+//   margin ≥ 0.10 且 bestOther ≥ 0.25 且 own ≤ 0.35 → 命中 8/25 个换号，误报 0/68。
+// 检出率不高是诚实的：标题式引用、纯列举、改写幅度大的句子没有足够文本可判。
+// 它是**补强**，不是替代判官（判官在同一批注入上抓到 7/22）。
+// ---------------------------------------------------------------------------
+const CONTENT_MARGIN = 0.10;
+const CONTENT_BEST_OTHER_FLOOR = 0.25;
+const CONTENT_OWN_CEIL = 0.35;
+/** 少于这么多个二元组的句子没有信息量，不判（标题、编号、"另见第X条"）。 */
+const CONTENT_MIN_BIGRAMS = 8;
+
+/** 去掉标点与空白后的字符二元组。中文没有空格分词，二元组是够用的粗粒度。 */
+function bigrams(text: string): Set<string> {
+    const t = text.replace(/[\s，。；：、"“”()（）【】\[\]{}·—…!?！？]/g, '');
+    const out = new Set<string>();
+    for (let i = 0; i + 1 < t.length; i++) out.add(t.slice(i, i + 2));
+    return out;
+}
+
+/** 句子里的二元组有多少比例出现在条文里。 */
+function bigramCoverage(sentence: Set<string>, body: string): number {
+    if (sentence.size === 0) return 0;
+    const b = bigrams(body);
+    if (b.size === 0) return 0;
+    let inter = 0;
+    for (const g of sentence) if (b.has(g)) inter++;
+    return inter / sentence.size;
 }
 
 /** 同一对 (法, 条号) 只查一次；「第577条」重复出现不重复告警。 */
@@ -189,22 +258,53 @@ export function verifyCitations(
             ? [...contextSources].filter(s => normLawName(s) === wantLaw)
             : [...contextSources];
 
+        let status: CitationStatus = !pairExists
+            ? 'fabricated'
+            : foundIn.length > 0 ? 'verified' : 'not_in_context';
+
+        // 内容绑定只在"条号对、也在 context 里"时有意义；其余两种失败已经说清楚了。
+        let contentOverlap: { own: number; bestOther: number } | null = null;
+        if (status === 'verified') {
+            const ownChunk = retrieved.find(r =>
+                parseArticleNo(r.articleNo) === c.articleNo
+                && (wantLaw === null || normLawName(r.source) === wantLaw));
+            if (ownChunk) {
+                const grams = bigrams(c.sentence);
+                const own = bigramCoverage(grams, ownChunk.document);
+                const bestOther = Math.max(0, ...retrieved
+                    .filter(r => r !== ownChunk)
+                    .map(r => bigramCoverage(grams, r.document)));
+                contentOverlap = { own, bestOther };
+
+                const enoughText = grams.size >= CONTENT_MIN_BIGRAMS;
+                if (enoughText
+                    && bestOther - own >= CONTENT_MARGIN
+                    && bestOther >= CONTENT_BEST_OTHER_FLOOR
+                    && own <= CONTENT_OWN_CEIL) {
+                    status = 'content_mismatch';
+                }
+            }
+        }
+
         checks.push({
             raw: c.raw,
             articleNo: c.articleNo,
             label: `第${c.articleNo}条`,
             law: c.law,
-            status: !pairExists ? 'fabricated' : foundIn.length > 0 ? 'verified' : 'not_in_context',
+            status,
             exists: pairExists,
             inContext: foundIn.length > 0,
             sources: [...new Set(hits.map(h => h.source))],
             foundIn,
             ambiguousLaw: !scoped && hits.length > 1,
+            contentOverlap,
         });
     }
 
-    // 按严重程度排序：编造的排最前，用户先看到最该看的
-    const rank: Record<CitationStatus, number> = { fabricated: 0, not_in_context: 1, verified: 2 };
+    // 按严重程度排序：编造的最先看，其次是"条号真但内容对不上"，再是凭记忆引用。
+    const rank: Record<CitationStatus, number> = {
+        fabricated: 0, content_mismatch: 1, not_in_context: 2, verified: 3,
+    };
     checks.sort((a, b) => rank[a.status] - rank[b.status] || a.articleNo - b.articleNo);
 
     const count = (s: CitationStatus) => checks.filter(c => c.status === s).length;
@@ -214,6 +314,7 @@ export function verifyCitations(
         verified: count('verified'),
         notInContext: count('not_in_context'),
         fabricated: count('fabricated'),
+        contentMismatch: count('content_mismatch'),
         hasProblem: checks.some(c => c.status !== 'verified'),
     };
 }
@@ -224,6 +325,7 @@ export function summarizeCitations(report: CitationReport): string | null {
     if (!report.hasProblem) return `${report.total} 处引用全部核对通过`;
     const parts: string[] = [];
     if (report.fabricated > 0) parts.push(`${report.fabricated} 处条号在语料中不存在`);
+    if (report.contentMismatch > 0) parts.push(`${report.contentMismatch} 处条号与相邻内容对不上`);
     if (report.notInContext > 0) parts.push(`${report.notInContext} 处未出现在检索结果中`);
     return `${report.total} 处引用中 ${parts.join('、')}`;
 }

@@ -30,7 +30,9 @@ and the replacement is held to the same standard.
 - **Citation verification.** Every 第X条 the model cites is looked up in the store
   *numerically* — 「第577条」and「第五百七十七条」are the same article — and classified
   `verified`, `not_in_context` (a real article, but cited from memory rather than from what
-  was actually retrieved), or `fabricated`. When the answer names the law next to the
+  was actually retrieved), `fabricated`, or `content_mismatch` (the number is real and was
+  retrieved, but the sentence next to it matches a *different* retrieved article much better —
+  the deterministic half of the article-swap check; 0/51 false positives, 8/25 injected swaps). When the answer names the law next to the
   citation, the lookup is scoped to **(law, article)**: a same-numbered article from the
   *other* law being in context no longer counts as verified — 民法典 and 公司法 both have a
   第二十三条, and the old number-only check called 「公司法第二十三条」verified when only
@@ -291,10 +293,20 @@ corpus — all six are genuine defects. The judge is reading whether the claim's
 anywhere in the retrieved set, and reporting the article number where it actually found it. It is
 not checking that the article the answer *points the reader at* is the one that says it.
 
-This is a known-open gap rather than an oversight: the citation verifier only checks existence, so
-"number real, content wrong" falls between the two guardrails, and the judge closes it only about
-a third of the time. Closing it deterministically — check that the text adjacent to each citation
-overlaps the cited article — is the obvious next step and needs no model.
+This was a known-open gap rather than an oversight: the citation verifier only checked existence,
+so "number real, content wrong" fell between the two guardrails, and the judge closes it only about
+a third of the time. The deterministic half is now implemented, and it is partial by design:
+`CitationVerifier` computes the bigram coverage between the sentence around each `verified`
+citation and the cited article, and the same coverage against every *other* retrieved article. If
+another article matches the sentence by ≥ 0.10 more and by ≥ 0.25 absolutely, the citation becomes
+`content_mismatch` instead of `verified`. Measured with `pnpm eval:citations` (27 cached answers,
+offline): **0/51 false positives on real citations, 8/25 injected swaps flagged** — 10/25 if you
+count every non-verified status. The 17 misses are the honest part: heading-only references,
+paraphrases the cited article does not lexically match, and swaps where the sentence has too little
+text to judge. The rule is deliberately one-sided — low overlap alone is never flagged, because
+legal answers paraphrase constantly and a warning that fires on paraphrase is a warning nobody
+reads. It is complementary to the judge (7/22 on its own injection set); the two were **not**
+measured jointly.
 
 **Calibration found a real prompt bug, which is the whole reason to run it.** The first judge
 prompt scored `article_swap` at **0/3** on an initial sample. The judge's own `evidence` field gave
@@ -934,6 +946,7 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
 | `pnpm eval:rerank` | Same eval with the cross-encoder reranker on — see §Reranking. |
 | `pnpm eval:signals` | Measure the similarity signals behind the abstention table. **Free, offline, deterministic** — never calls a model. |
 | `pnpm eval:abstention` | Measure the answerability judge: both error rates, stratified by `oodKind`, plus the `sim`-vs-`judge` policy counterfactual. **Costs money** — see §Abstention. |
+| `pnpm eval:citations` | Calibrate the citation content-binding check on cached answers plus injected swaps. Free/offline, but needs the gitignored answer cache. |
 | `pnpm eval:faithfulness` | LLM-judge faithfulness: are the answer's claims supported by what was retrieved? **Costs money** — see §Faithfulness. |
 | `pnpm eval:faithfulness:calib` | The same, plus defect-injection calibration and judge-stability runs. What makes the score interpretable. |
 | `pnpm embed` | Rebuild the retrieval index and refresh the corpus manifest. |

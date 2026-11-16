@@ -283,3 +283,58 @@ test('法名在上一句：不会把下一句的引用绑过去', async () => {
     assert.equal(c.law, null, '第二十三条在另一个分句里，没有点名法律');
     assert.equal(c.status, 'verified');
 });
+
+// ---------------------------------------------------------------------------
+// 内容绑定：条号真、也在 context 里，但引用旁边那段话其实属于另一条
+//
+// 这是 faithfulness 的 article_swap（判官只抓到 7/22）。确定性规则见
+// CitationVerifier.ts 的 CONTENT_*：own 低、bestOther 明显更高时才报，
+// 避免把"法律答案本来就会改写"误报成张冠李戴。
+// ---------------------------------------------------------------------------
+
+test('content_mismatch：句子讲的其实是另一条被检索到的条文', async () => {
+    const breach = '第五百七十七条 当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。';
+    const marital = '第一千零六十二条 夫妻在婚姻关系存续期间所得的下列财产，为夫妻的共同财产，归夫妻共同所有：（一）工资、奖金、劳务报酬。';
+    const store = await makeStore([
+        { articleNo: '第五百七十七条', source: '民法典.md', document: breach },
+        { articleNo: '第一千零六十二条', source: '民法典.md', document: marital },
+    ]);
+    const retrieved = [
+        chunk('第五百七十七条', '民法典.md', breach),
+        chunk('第一千零六十二条', '民法典.md', marital),
+    ];
+
+    const report = verifyCitations(
+        '根据民法典第五百七十七条，夫妻在婚姻关系存续期间所得的工资、奖金和劳务报酬，归夫妻共同所有。',
+        store, retrieved,
+    );
+
+    const c = find(report, 577)!;
+    assert.equal(c.status, 'content_mismatch');
+    assert.ok(c.contentOverlap!.bestOther > c.contentOverlap!.own, '另一条的覆盖率应当更高');
+    assert.equal(report.contentMismatch, 1);
+    assert.equal(report.hasProblem, true);
+    assert.match(summarizeCitations(report)!, /对不上/);
+});
+
+test('内容与所引条文一致 → verified，不报 content_mismatch', async () => {
+    const breach = '第五百七十七条 当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。';
+    const store = await makeStore([{ articleNo: '第五百七十七条', source: '民法典.md', document: breach }]);
+    const retrieved = [chunk('第五百七十七条', '民法典.md', breach)];
+
+    const report = verifyCitations(
+        '根据民法典第五百七十七条，一方不履行合同义务的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。',
+        store, retrieved,
+    );
+    assert.equal(find(report, 577)!.status, 'verified');
+    assert.equal(report.contentMismatch, 0);
+});
+
+test('只有标题式引用 → 文本不足，不判 content_mismatch', async () => {
+    const breach = '第五百七十七条 当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。';
+    const store = await makeStore([{ articleNo: '第五百七十七条', source: '民法典.md', document: breach }]);
+    const retrieved = [chunk('第五百七十七条', '民法典.md', breach)];
+
+    const report = verifyCitations('### 民法典第五百七十七条\n\n（条文略）', store, retrieved);
+    assert.equal(find(report, 577)!.status, 'verified');
+});

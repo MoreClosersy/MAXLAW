@@ -239,7 +239,10 @@ export async function runQuery(opts: QueryOptions): Promise<QueryResult> {
                 `[citation]   ${c.label}（原文「${c.raw}」）` +
                 (c.status === 'fabricated'
                     ? (c.law ? ` —— ${c.law}中不存在此条号` : ' —— 语料中不存在此条号')
-                    : ` —— ${c.law ? `${c.law}中` : ''}条号真实存在（${c.sources.join('、')}），但未出现在本次检索结果中`)
+                    : c.status === 'content_mismatch'
+                        ? ` —— 条号真实且已检索到，但相邻表述与条文几乎不重合` +
+                          `（own=${c.contentOverlap?.own.toFixed(3)}，other=${c.contentOverlap?.bestOther.toFixed(3)}）`
+                        : ` —— ${c.law ? `${c.law}中` : ''}条号真实存在（${c.sources.join('、')}），但未出现在本次检索结果中`)
             );
         }
     }

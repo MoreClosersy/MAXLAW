@@ -286,6 +286,7 @@ function CitationCheckBlock({ report }) {
       <div className="citation-check-title">
         ⚠ {report.total} 处引用中有 {problems.length} 处未能核实
         {report.fabricated > 0 && `，其中 ${report.fabricated} 处条号在本地法条库中不存在`}
+        {report.contentMismatch > 0 && `，其中 ${report.contentMismatch} 处条号与相邻内容对不上`}
       </div>
       <ul className="citation-check-list">
         {problems.map((c, i) => (
@@ -293,7 +294,9 @@ function CitationCheckBlock({ report }) {
             <code>{c.label}</code>
             {c.status === 'fabricated'
               ? (c.law ? ` —— ${c.law}中不存在此条号，请勿直接采信` : ' —— 本地法条库中不存在此条号，请勿直接采信')
-              : ` —— ${c.law ? `${c.law}中` : ''}条号确实存在（${c.sources.join('、')}），但未出现在本次检索结果中，属于凭记忆引用`}
+              : c.status === 'content_mismatch'
+                ? ' —— 条号真实且已检索到，但相邻表述与条文内容几乎不重合，请核对是否张冠李戴'
+                : ` —— ${c.law ? `${c.law}中` : ''}条号确实存在（${c.sources.join('、')}），但未出现在本次检索结果中，属于凭记忆引用`}
           </li>
         ))}
       </ul>

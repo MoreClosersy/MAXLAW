@@ -184,6 +184,7 @@ interface Row {
     citationsVerified?: number;
     citationsFabricated?: number;
     citationsNotInContext?: number;
+    citationsContentMismatch?: number;
 }
 
 const rows: Row[] = [];
@@ -212,6 +213,7 @@ for (const c of cases) {
         row.citationsVerified = result.citations.verified;
         row.citationsFabricated = result.citations.fabricated;
         row.citationsNotInContext = result.citations.notInContext;
+        row.citationsContentMismatch = result.citations.contentMismatch;
         row.abstained = result.abstained;   // 以真实链路为准
     }
     rows.push(row);
@@ -305,8 +307,9 @@ if (GENERATE) {
     const verified = cited.reduce((a, r) => a + (r.citationsVerified ?? 0), 0);
     const fab = cited.reduce((a, r) => a + (r.citationsFabricated ?? 0), 0);
     const ooc = cited.reduce((a, r) => a + (r.citationsNotInContext ?? 0), 0);
+    const mismatch = cited.reduce((a, r) => a + (r.citationsContentMismatch ?? 0), 0);
     console.log(`\n引用校验：${cited.length}/${rows.length} 条回答含条号引用，共 ${total} 处`);
-    console.log(`   核实通过 ${verified}  条号不存在 ${fab}  未出现在检索结果中 ${ooc}`);
+    console.log(`   核实通过 ${verified}  条号不存在 ${fab}  内容对不上 ${mismatch}  未出现在检索结果中 ${ooc}`);
     console.log(`   引用准确率 ${rate(verified, total)}`);
 }
 
