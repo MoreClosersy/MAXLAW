@@ -86,7 +86,7 @@ The manifest exists so an eval report can state which corpus it measured.
 
 ## Evaluation
 
-`pnpm eval` runs `eval/dataset.jsonl` (69 questions) against the corpus and writes
+`pnpm eval` runs `eval/dataset.jsonl` (74 questions, 32 with ground truth) against the corpus and writes
 `eval/report.json`. It is **retrieval-only by default** — `--generate` adds answer
 generation and citation accuracy — because retrieval metrics are deterministic and can gate
 CI, while generation metrics are noisy and cost money.
@@ -102,25 +102,33 @@ two bad answer keys on the first run, and a silently wrong answer key reports a 
 | `semantic` | 21 | 0.905 | 1.000 | 1.000 | 1.000 | 0.952 | 0.000 |
 | `near_duplicate` | 2 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
 | `out_of_domain` | 42 | — | — | — | — | — | **0.310** |
-| **overall (27 with ground truth)** | **27** | **0.926** | **1.000** | **1.000** | **1.000** | **0.963** | 0.000 |
+| `multi_law` | 5 | 0.600 | 0.800 | 1.000 | 0.400 | 0.750 | 0.000 |
+| **overall (32 with ground truth)** | **32** | **0.875** | **0.969** | **1.000** | **0.906** | **0.930** | 0.000 |
 
 `hit@K` counts a question as retrieved when **any one** expected article lands in the top K;
-coverage@K requires **every** expected article. Both are **1.000** here — on this index even
-`sem-14`'s second article (#19) comes back, which the previous bge index missed. The remaining
-gap is *ranking*: 2 of 27 questions have the right article in the top 5 but not at rank 1
-(hit@1 0.926), and MRR is 0.963. That is a different problem with a different fix (a
-reranker) — see §Reranking for what happened when one was added to the old index.
+coverage@K requires **every** expected article. hit@5 is **1.000**, but coverage@5 is
+**0.906** — and the five `multi_law` cases are where it breaks: 3 of them retrieve only one
+side. `multi-01` gets 公司法#23 at rank 1 but 民法典#83 at rank **9**; `multi-03` gets
+公司法#15 at rank 4 but 民法典#504 at rank **7**; `multi-04` gets 公司法#84 at rank 2 and
+民法典#1062 not in the top 20 at all. The per-law coverage gate only injects a law when its
+best candidate is next in line (rank ≤ topK+1), so a rank-7/9 candidate is not added —
+relaxing that gate is what re-admitted the 提存 noise measured earlier. Deterministic quotas
+cannot close this: the second law's article is semantically distant from a question phrased in
+the first law's vocabulary. The next step is query decomposition/rewrite, not a larger topK.
+The ranking side is 0.875 hit@1 / 0.930 MRR: 4 of 32 questions have the right article in the
+top 5 but not at rank 1.
 
-Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `ddfa161d6775` ·
+Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `307045aca36e` ·
 topK 5 · `EMBEDDING_MODEL=text-embedding-3-large` (3072-dim). The embedding model belongs in
 that list: swapping it changes every score while the corpus fingerprint stays byte-identical,
 so a report that omits it makes two incomparable numbers look like the same measurement.
 
 > **Measurement provenance (2026-11-17).** The table above is the `text-embedding-3-large`
-> index. §Abstention, §Faithfulness, §Reranking and the citation calibrations below were
-> measured on the previous `bge-base-zh-v1.5` index and have **not** been re-run after the
-> switch; retrieval context changed, so those numbers are not comparable to this table. The
-> judge prompts and the citation checks themselves did not change.
+> index with the five `multi_law` cases added (dataset `307045aca36e`). §Abstention and
+> §Faithfulness below were measured on the **previous** index *and* the 69-question dataset
+> (27 in-domain); they have not been re-run after either change, so their denominators and
+> contexts are both older than this table. §Reranking and the citation calibrations are from
+> the bge index too. The judge prompts and the citation checks themselves did not change.
 
 ### The embedding model was chosen by measurement, not by preference
 
@@ -148,7 +156,8 @@ mistake this section warns about — two numbers that look like one measurement.
 
 **2026-11-17: the default moved to `text-embedding-3-large` (3072-dim).** Same corpus,
 dataset, code and chunking — only the model changed: hit@1 **0.926** (was 0.778), hit@3
-**1.000**, hit@5 **1.000**, coverage@5 **1.000** (was 0.963: `sem-14`'s #19 now comes back),
+**1.000**, hit@5 **1.000**, coverage@5 **1.000** (was 0.963: `sem-14`'s #19 now comes back;
+this comparison is on the 69-question dataset, before the five `multi_law` cases were added),
 MRR **0.963** (was 0.862). `text-embedding-3-small` was measured first and is **worse than
 bge** (hit@1 0.778 / hit@5 0.926 / MRR 0.836), so the choice between the two OpenAI models was
 also made by measurement, not by price. The switch itself was forced: the HuggingFace
@@ -271,7 +280,8 @@ retrieved, and the answer still concluding something the articles do not support
 `pnpm eval:faithfulness` measures that. An LLM judge splits each answer into claims and asks,
 one at a time, whether the retrieved articles say that.
 
-27 in-domain questions, `gpt-4o-mini` answering, **`gpt-4o` judging** — deliberately not the
+27 in-domain questions (the dataset now has 32; this run predates the five `multi_law` cases),
+`gpt-4o-mini` answering, **`gpt-4o` judging** — deliberately not the
 same model, and the stability measurement below is why that choice matters more than anything
 else on this page:
 
@@ -383,8 +393,9 @@ accepts. Building a hand-labelled precision set is the remaining piece of this m
 
 Everything above concludes that abstention cannot be a threshold on a similarity score. The
 replacement is one LLM call after retrieval, and it must **name** the article(s) that answer the
-question: a verdict the code cannot audit is not a verdict. 69 questions, judge `gpt-4o`, judge
-prompt v2, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775`:
+question: a verdict the code cannot audit is not a verdict. 69 questions at the time, judge
+`gpt-4o`, judge prompt v2, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775` (the dataset
+now has 74 questions / 32 in-domain; this section has not been re-run):
 
 | | judge-gated | similarity threshold alone |
 |---|---|---|
@@ -527,8 +538,9 @@ which is exactly what makes them fit to fail a build. Generation metrics are not
 `pnpm eval:gate` runs the eval with today's scores as floors:
 
 ```bash
-tsx eval/run.ts --min-hit=1.0 --min-hit-all=1.0 --min-mrr=0.963 \
-  --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0
+tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.906 --min-mrr=0.930 \
+  --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0 \
+  --min-cat-hit=multi_law:1.0
 ```
 
 | Flag | Gates | Why it is its own gate |
@@ -555,8 +567,9 @@ fail on a regression, not to express a target. They are rank-based, so they move
 rank actually flips.
 
 `.github/workflows/eval-gate.yml` runs this on push. It restores `cache/` via
-`actions/cache`, keyed on the corpus fingerprint, the model and an `INDEX_VERSION` that is
-bumped when the chunker changes; a warm cache makes the entire gate **offline** — 1,681 chunk
+`actions/cache`, keyed on the corpus fingerprint, the model, an `INDEX_VERSION` that is
+bumped when the chunker changes, and the `eval/dataset.jsonl` hash (query vectors live in the
+same cache file, so adding a case must invalidate it); a warm cache makes the entire gate **offline** — 1,681 chunk
 vectors plus the query vectors, no API key, no secrets. `pnpm embed` runs only on a cache miss,
 because its `pruneCache()` would otherwise delete the query vectors and force the next step
 online to get them back.
@@ -573,6 +586,7 @@ pnpm embed          # rebuild after a corpus / INDEX_VERSION change
 pnpm eval           # so the 69 query vectors are in the same cache file
 pnpm index:pack     # index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz
 # upload it to a release tagged `index-cache` (overwrite the same asset name)
+# repack after adding a dataset case too: the query vectors live in the same file
 ```
 
 On a cache miss the job downloads
@@ -932,8 +946,9 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   coverage are deterministic and unit-tested, but nothing infers a *second* law the user did
   not name. The judge can now return multiple requirements (prompt v2), so a half-retrieved
   multi-law answer is no longer *accepted* as answerable — but v2 is not yet re-measured (see
-  §Abstention), and retrieval still guarantees coverage only for named laws. coverage@5 is 0.963
-  and `sem-14` is the one known partial miss.
+  §Abstention), and retrieval still guarantees coverage only for named laws. coverage@5 is
+  **0.906**: three of the five `multi_law` cases retrieve only one side, and `sem-14`'s second
+  article is the old example of the same failure.
 - **Retrieval is lexical + dense, not hybrid.** BM25 with reciprocal-rank fusion is planned
   but not implemented, so exact-term queries relying on rare wording can under-retrieve.
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage

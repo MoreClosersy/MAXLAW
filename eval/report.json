@@ -2,7 +2,7 @@
   "corpusVersion": 2,
   "corpusHash": "39727cfdca37a660",
   "totalArticles": 1526,
-  "datasetSha1": "ddfa161d6775",
+  "datasetSha1": "307045aca36e",
   "config": {
     "embeddingModel": "text-embedding-3-large",
     "embeddingDimension": 3072,
@@ -15,7 +15,7 @@
       "judge": null
     }
   },
-  "generatedAt": "2026-11-16T16:47:21.095Z",
+  "generatedAt": "2026-11-16T17:12:03.277Z",
   "metrics": [
     {
       "label": "article_lookup",
@@ -62,14 +62,25 @@
       "abstainRate": "0.310"
     },
     {
-      "label": "整体(有 GT)",
-      "n": 27,
+      "label": "multi_law",
+      "n": 5,
       "hasGT": true,
-      "hit1": "0.926",
-      "hit3": "1.000",
+      "hit1": "0.600",
+      "hit3": "0.800",
       "hitK": "1.000",
-      "hitAllK": "1.000",
-      "mrr": "0.963",
+      "hitAllK": "0.400",
+      "mrr": "0.750",
+      "abstainRate": "0.000"
+    },
+    {
+      "label": "整体(有 GT)",
+      "n": 32,
+      "hasGT": true,
+      "hit1": "0.875",
+      "hit3": "0.969",
+      "hitK": "1.000",
+      "hitAllK": "0.906",
+      "mrr": "0.930",
       "abstainRate": "0.000"
     }
   ],
@@ -1237,6 +1248,101 @@
         "民法典.md#423",
         "民法典.md#439",
         "民法典.md#424"
+      ]
+    },
+    {
+      "id": "multi-01",
+      "category": "multi_law",
+      "question": "公司股东滥用法人独立地位和股东有限责任逃避债务，民法典和公司法分别怎么规定？",
+      "abstained": false,
+      "topScore": 0.7304,
+      "reason": "answered",
+      "ranks": [
+        1,
+        0
+      ],
+      "retrieved": [
+        "公司法.md#23",
+        "公司法.md#253",
+        "公司法.md#4",
+        "公司法.md#256",
+        "公司法.md#53"
+      ]
+    },
+    {
+      "id": "multi-02",
+      "category": "multi_law",
+      "question": "公司设立阶段，发起人以公司名义签订的合同，民法典和公司法分别怎么规定后果归属？",
+      "abstained": false,
+      "topScore": 0.6159,
+      "reason": "answered",
+      "ranks": [
+        1,
+        3
+      ],
+      "retrieved": [
+        "公司法.md#44",
+        "公司法.md#93",
+        "民法典.md#75",
+        "公司法.md#50",
+        "公司法.md#253"
+      ]
+    },
+    {
+      "id": "multi-03",
+      "category": "multi_law",
+      "question": "法定代表人越权为他人提供担保，民法典和公司法分别怎么规定？",
+      "abstained": false,
+      "topScore": 0.6238,
+      "reason": "answered",
+      "ranks": [
+        0,
+        4
+      ],
+      "retrieved": [
+        "公司法.md#11",
+        "民法典.md#62",
+        "公司法.md#23",
+        "公司法.md#15",
+        "公司法.md#10"
+      ]
+    },
+    {
+      "id": "multi-04",
+      "category": "multi_law",
+      "question": "夫妻一方转让名下有限责任公司股权，其他股东能否主张优先购买权？",
+      "abstained": false,
+      "topScore": 0.6571,
+      "reason": "answered",
+      "ranks": [
+        2,
+        0
+      ],
+      "retrieved": [
+        "公司法.md#85",
+        "公司法.md#84",
+        "公司法.md#89",
+        "公司法.md#88",
+        "公司法.md#86"
+      ]
+    },
+    {
+      "id": "multi-05",
+      "category": "multi_law",
+      "question": "公司解散后清算义务人未及时清算，造成损失要承担什么责任？",
+      "abstained": false,
+      "topScore": 0.6785,
+      "reason": "answered",
+      "ranks": [
+        1,
+        2
+      ],
+      "retrieved": [
+        "公司法.md#232",
+        "民法典.md#70",
+        "公司法.md#238",
+        "公司法.md#233",
+        "公司法.md#237"
       ]
     }
   ]

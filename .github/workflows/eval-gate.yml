@@ -13,9 +13,10 @@
 #
 # 索引缓存的四个要点：
 #   1. `cache/` 在 .gitignore 里（~28MB 向量），所以走 actions/cache 而不是 git。
-#   2. 缓存键 = 语料指纹 + 模型 + INDEX_VERSION。语料变更由 corpusHash 自动覆盖；
-#      **分块逻辑或 embedText 变更时手动把 INDEX_VERSION +1**——否则键不变，
-#      而 chunk hash 全变了，严格模式会报"索引不完整"。
+#   2. 缓存键 = 语料指纹 + 模型 + INDEX_VERSION + 数据集哈希。语料变更由 corpusHash
+#      自动覆盖，**数据集变更由 dataset.jsonl 的哈希覆盖**——查询向量和语料向量存在
+#      同一个缓存文件里，加一道题而键不变，就会命中一份缺该题查询向量的缓存；
+#      **分块逻辑或 embedText 变更时手动把 INDEX_VERSION +1**。
 #   3. 冷缓存**不需要密钥**也能跑：从 release `index-cache` 下载预构建索引
 #      （`index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`，用 tools/pack_index.sh 生成）。
 #      只有该资产不存在时才退回 EMBEDDING_API_KEY 现场建索引；
@@ -70,7 +71,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ hashFiles('eval/dataset.jsonl') }}
 
       # 冷缓存的第一条路：release 里的预构建索引。公开仓库的 release 资产
       # 不需要 token，fork PR 也能下载——这正是不把密钥当唯一路径的理由。
@@ -133,7 +134,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ hashFiles('eval/dataset.jsonl') }}
 
       - name: 存档评测报告
         if: always()
