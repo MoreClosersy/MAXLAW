@@ -1,7 +1,7 @@
 import { logTitle } from "./utils.js";
-import VectorStore, { RetrievedChunk, QuerySignals } from "./VectorStore.js";
+import VectorStore, { RetrievedChunk, QuerySignals, ensureLawCoverage } from "./VectorStore.js";
 import { RERANK_CANDIDATES, partitionPinned, RerankerLike } from "./Reranker.js";
-import { extractArticleNumbers } from "./articleNo.js";
+import { cnToNumber } from "./articleNo.js";
 import { CACHE_DIR } from "./paths.js";
 import 'dotenv/config';
 import fs from 'fs';
@@ -580,7 +580,10 @@ export default class EmbeddingRetriever {
         // 白折腾一趟，还倒退回修好之前。
         const { pinned, rerankable } = partitionPinned(kept);
         const reranked = await this.reranker.rerank(query, rerankable);
-        return [...pinned, ...reranked].slice(0, topK);
+        const merged = [...pinned, ...reranked];
+        // 精排会重排整个候选池，所以保底覆盖要在**切 topK 之前**再做一次：
+        // 否则 search 里补进来的那部法，可能刚好被精排排到第 6 位又被切掉。
+        return ensureLawCoverage(merged.slice(0, topK), merged, signals.lawNames);
     }
 
     size(): number {
@@ -794,27 +797,107 @@ function chapterPrefix(chapter: string | null): string | null {
     return kept.join(' > ') || null;
 }
 
-/**
- * 从查询里抽结构化信号，交给 VectorStore 决定怎么加权。
- *
- * 原来这里返回 `string[]`，由 VectorStore 做 `document.includes(kw) || articleNo === kw`
- * 的字符串比对。两个坑：
- *   1. 语料存「第五百七十七条」，查询写「第577条」——字符串永不相等，
- *      于是"直接问某一条"这条**精度最高**的路径从来没有生效过
- *      （实测 article_lookup 的 hit@1 = 0.000，问第577条却召回章标题）。
- *   2. 抽出的裸数字（"577"）会去撞正文里的任意数字，制造无关命中。
- * 所以这里只输出归一后的语义：条号给**数值**，法律名给名字。数值比较是硬要求，
- * 同一条规矩在 articleNo.ts 里已经写过一次了。
- */
-export function parseQuery(query: string): QuerySignals {
-    return {
-        articleNos: [...extractArticleNumbers(query).keys()],
-        lawNames: KNOWN_LAW_NAMES.filter(name => query.includes(name)),
-    };
-}
-
 /** 语料里可能出现的法律名。命中后作为 **source 过滤信号**，不再当正文字符串用。 */
 const KNOWN_LAW_NAMES = [
     '民法典', '合同法', '公司法', '劳动法', '知识产权', '刑法',
     '行政法', '婚姻法', '继承法', '侵权责任法', '消费者权益保护法',
 ];
+
+/** 长名优先：当前列表没有前缀重叠，但别把这一点当巧合依赖。 */
+const LAW_NAME_RE = new RegExp([...KNOWN_LAW_NAMES].sort((a, b) => b.length - a.length).join('|'), 'g');
+
+/** 查询里的条号（含中文数字），与 articleNo.ts 的 CITATION_RE 保持同一套写法。 */
+const QUERY_ARTICLE_RE = /第\s*([0-9]+|[一二三四五六七八九十百千万零两]+)\s*条/g;
+
+/**
+ * 分句边界：句号/分号/问号/叹号/换行。
+ * 逗号**不算**——「民法典，第577条」显然还是同一句；把逗号当边界会让常见写法失去法律归属。
+ */
+const CLAUSE_BOUNDARY = /[。；;！!？?\n]/g;
+
+/** 两个法律名之间允许出现的并列符；出现别的词就说明它们不是并列关系。 */
+const COORDINATION_ONLY = /^[\s和与及、,，/]*$/;
+
+interface LawMention {
+    name: string;
+    start: number;
+    end: number;
+}
+
+/** 找出管辖某个条号的法律名：同分句内、条号之前最近的那个；并列的法律名一起管。 */
+function lawsGoverning(query: string, laws: LawMention[], numberStart: number): string[] {
+    let clauseStart = 0;
+    for (const m of query.slice(0, numberStart).matchAll(CLAUSE_BOUNDARY)) {
+        clauseStart = (m.index ?? 0) + m[0].length;
+    }
+    const inClause = laws.filter(l => l.start >= clauseStart && l.end <= numberStart);
+    if (inClause.length === 0) return [];
+
+    // 最近的那个法律名先认领，再向左吞并"只靠并列符相连"的邻居：
+    // 「公司法和民法典第二十三条」→ 两家的第二十三条都算被点名。
+    const picked = [inClause[inClause.length - 1].name];
+    for (let i = inClause.length - 1; i > 0; i--) {
+        if (!COORDINATION_ONLY.test(query.slice(inClause[i - 1].end, inClause[i].start))) break;
+        picked.unshift(inClause[i - 1].name);
+    }
+    return picked;
+}
+
+function dedupePairs(pairs: { law: string; articleNo: number }[]) {
+    const seen = new Set<string>();
+    return pairs.filter(p => {
+        const key = `${p.law}#${p.articleNo}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+/**
+ * 从查询里抽结构化信号，交给 VectorStore 决定怎么加权。
+ *
+ * 原来这里返回 `string[]`，由 VectorStore 做 `document.includes(kw) || articleNo === kw`
+ * 的字符串比对。三个坑：
+ *   1. 语料存「第五百七十七条」，查询写「第577条」——字符串永不相等，
+ *      于是"直接问某一条"这条**精度最高**的路径从来没有生效过
+ *      （实测 article_lookup 的 hit@1 = 0.000，问第577条却召回章标题）。
+ *   2. 抽出的裸数字（"577"）会去撞正文里的任意数字，制造无关命中。
+ *   3. **法和条号必须配对，不能是两个独立集合。** 旧输出把 lawNames 和 articleNos
+ *      分开返回，VectorStore 用「条号命中 ∩ 属于任一被点名法律」置顶——查点名两部法时，
+ *      那就是两个集合的**笛卡尔积**。实测（2 维构造库，走的是真实 search 代码）：
+ *      「民法典第577条和公司法第二十三条」会把从未被问到的民法典第二十三条一并置顶；
+ *      且置顶项会被标成 exactArticleHit，于是 `shouldSkipJudge` 直接跳过可答性判官。
+ *      现在条号带着它所属的法律一起返回（`articlePairs`），置顶只认配上的那一条。
+ *
+ * 绑不上法律名的条号（用户只说「第577条」）仍留在 `articleNos`，按旧语义在**所有**法律里
+ * 置顶——用户点名了条号，那就是查找，不该因为没有法律名而降级。
+ */
+export function parseQuery(query: string): QuerySignals {
+    const laws: LawMention[] = [...query.matchAll(LAW_NAME_RE)].map(m => ({
+        name: m[0],
+        start: m.index ?? 0,
+        end: (m.index ?? 0) + m[0].length,
+    }));
+    const lawNames = [...new Set(laws.map(l => l.name))];
+    const numbers = [...query.matchAll(QUERY_ARTICLE_RE)]
+        .map(m => ({ articleNo: cnToNumber(m[1]), start: m.index ?? 0 }))
+        .filter((x): x is { articleNo: number; start: number } =>
+            Number.isFinite(x.articleNo) && x.articleNo > 0);
+
+    if (laws.length === 0) {
+        return { articleNos: [...new Set(numbers.map(n => n.articleNo))], lawNames };
+    }
+
+    const pairs: { law: string; articleNo: number }[] = [];
+    const unscoped: number[] = [];
+    for (const n of numbers) {
+        const governing = lawsGoverning(query, laws, n.start);
+        if (governing.length === 0) unscoped.push(n.articleNo);
+        for (const law of governing) pairs.push({ law, articleNo: n.articleNo });
+    }
+    return {
+        articleNos: [...new Set(unscoped)],
+        lawNames,
+        articlePairs: dedupePairs(pairs),
+    };
+}

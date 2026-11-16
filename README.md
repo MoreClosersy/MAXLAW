@@ -90,19 +90,23 @@ the live corpus and refuses to run if one has gone stale. This is not ceremony: 
 two bad answer keys on the first run, and a silently wrong answer key reports a confident
 0.000, which is worse than reporting nothing.
 
-| Category | n | hit@1 | hit@3 | hit@5 | MRR | abstained |
-|---|---|---|---|---|---|---|
-| `article_lookup` | 4 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| `semantic` | 21 | 0.714 | 0.905 | 1.000 | 0.823 | 0.000 |
-| `near_duplicate` | 2 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| `out_of_domain` | 42 | — | — | — | — | **0.071** |
-| **overall (27 with ground truth)** | **27** | **0.778** | **0.926** | **1.000** | **0.862** | 0.000 |
+| Category | n | hit@1 | hit@3 | hit@5 | coverage@5 | MRR | abstained |
+|---|---|---|---|---|---|---|---|
+| `article_lookup` | 4 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| `semantic` | 21 | 0.714 | 0.905 | 1.000 | 0.952 | 0.823 | 0.000 |
+| `near_duplicate` | 2 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| `out_of_domain` | 42 | — | — | — | — | — | **0.071** |
+| **overall (27 with ground truth)** | **27** | **0.778** | **0.926** | **1.000** | **0.963** | **0.862** | 0.000 |
 
-Every ground-truth article now lands in the top 5 — hit@5 is **1.000**, so there are no
-recall failures left. The remaining gap is entirely *ranking*: 6 of 27 questions have the
-right article somewhere in the top 5 but not at rank 1. That is a different problem with a
-different fix (a reranker), and it is the reason the next step was not "better embeddings" —
-see §Reranking for what happened when one was added.
+`hit@K` counts a question as retrieved when **any one** expected article lands in the top K.
+By that definition hit@5 is **1.000** — but coverage@5, which requires **every** expected
+article, is **0.963**: `sem-14` expects 民法典#145 *and* #19, and #19 never comes back
+(rank 0). The two numbers are reported together because a question that retrieves half its
+answer is invisible to hit@K, and that is exactly the shape of a multi-law miss. Apart from
+that one case the remaining gap is *ranking*: 6 of 27 questions have the right article
+somewhere in the top 5 but not at rank 1. That is a different problem with a different fix
+(a reranker), and it is the reason the next step was not "better embeddings" — see
+§Reranking for what happened when one was added.
 
 Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `ddfa161d6775` ·
 topK 5 · `EMBEDDING_MODEL=BAAI/bge-base-zh-v1.5` (768-dim). The embedding model belongs in
@@ -450,6 +454,7 @@ tsx eval/run.ts --min-hit=1.0 --min-mrr=0.862 \
 | Flag | Gates | Why it is its own gate |
 |---|---|---|
 | `--min-hit` | overall hit@K (recall) | an answer outside the top K cannot be rescued downstream |
+| `--min-hit-all` | overall coverage@K | hit@K only needs *any* expected article; a multi-law question that comes back half-answered still scores 1.000 |
 | `--min-mrr` | overall MRR (ranking) | a reranker moves ranks without touching recall — hit@K cannot see it |
 | `--min-cat-hit=<cat>:<v>` | one category's hit@K, repeatable | a single category's collapse is diluted in the overall figure |
 
@@ -698,6 +703,41 @@ the chunk belongs to. Two things are deliberately *not* similarity-ranked:
 vectors are dropped at cache-load time — a dimension mismatch used to reorder results
 silently.
 
+### Multi-law queries
+
+The corpus has two laws, and a question can name both. Two mechanisms handle that case;
+both are deterministic and pinned by `src/tests/multiLawRecall.test.ts`:
+
+- **Article-number promotion is paired, not a cross product.** `parseQuery()` attaches each
+  `第X条` to the nearest law named earlier in the same clause. Commas are not clause
+  boundaries, and coordinated names share the number — 「公司法和民法典第二十三条」 means
+  both laws' 第二十三条. Without the pairing, 「民法典第577条和公司法第二十三条」 pinned
+  民法典#23 as well (an article nobody asked for) and marked it `exactArticleHit`, which
+  made `shouldSkipJudge` skip the answerability judge entirely. Numbers with no law in
+  their clause stay unscoped and are still honoured across all laws.
+- **A named law gets a slot, but only if it lost by one.** `ensureLawCoverage()` runs after
+  ranking (and again after reranking): if a named law present in the corpus has no chunk in
+  the top-K, its best candidate replaces the lowest-ranked non-pinned chunk **when that
+  candidate was the very next in line** (rank ≤ topK+1). It never evicts a pinned article,
+  never removes another named law's only representative, and does nothing when the named law
+  is not in the corpus (合同法/刑法) — that is a refusal decision, not a retrieval one.
+
+  The gate is not defensive coding; it came from running the thing. With sem-09's real query
+  vector and both laws named, the best 民法典 candidate was globally **rank 10** —
+  第五百七十四条 (提存), unrelated to the question — while rank 5 was a 公司法 article.
+  Injecting it would have been noise sold as recall. A law whose best candidate cannot make
+  first alternate has nothing relevant to contribute; the honest outcome is "this law has no
+  provision on point", not an article chosen by a quota.
+
+What it does **not** do: it only fires when the question names the laws. A question that
+names one law but needs another ("法定代表人以公司名义…" needs 公司法#11 **and** 民法典#61)
+still depends on the bi-encoder retrieving both, and the answerability judge can name only
+one article. It also cannot fix vocabulary mismatch: a question phrased in 公司法 terms will
+not surface the right 民法典 article merely because 民法典 was named — the per-law quota
+only decides *whether* that law is represented, not *which* article represents it. Those two
+cases need per-law query rewriting (decomposition) plus a judge that returns a *list* of
+requirements — see §Limitations.
+
 ### Reranking is implemented, measured, and off by default
 
 `/api/chat` runs two stages when `RERANK_ENABLED=1`: bi-encoder recall, then a local
@@ -772,6 +812,10 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
 - **Two laws.** 民法典 and 公司法. Contract law is covered as 民法典 第三编; labour law and
   IP law are not in the corpus. Questions about those are now **refused** rather than answered out
   of the model's own knowledge — 42/42 of the out-of-domain set, see §Abstention.
+- **Multi-law recall is only handled when the question names the laws.** Pairing and per-law
+  coverage are deterministic and unit-tested, but nothing infers a *second* law the user did
+  not name; the judge names one article, so "one requirement met, one missing" is not
+  detectable end to end. coverage@5 is 0.963 and `sem-14` is the one known partial miss.
 - **Retrieval is lexical + dense, not hybrid.** BM25 with reciprocal-rank fusion is planned
   but not implemented, so exact-term queries relying on rare wording can under-retrieve.
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage

@@ -56,9 +56,10 @@ const GENERATE = has('--generate');
 const VERBOSE = has('--verbose') || has('-v');
 const ONLY_CATEGORY = argv.find(a => a.startsWith('--category='))?.split('=')[1];
 /**
- * CI 门禁。三类闸，都只在显式指定时判定（不传就只报数，避免默认行为随指标波动而变）：
+ * CI 门禁。四类闸，都只在显式指定时判定（不传就只报数，避免默认行为随指标波动而变）：
  *
- *   --min-hit=<v>              整体 hit@K 下限 —— 闸**召回**
+ *   --min-hit=<v>              整体 hit@K 下限 —— 闸**召回**（命中任意一条即可）
+ *   --min-hit-all=<v>          整体覆盖@K 下限 —— 闸**覆盖率**（每条 ground truth 都要进 top-K）
  *   --min-mrr=<v>              整体 MRR 下限   —— 闸**排序**
  *   --min-cat-hit=<类别>:<v>   分类别 hit@K 下限，可重复 —— 闸**单类塌陷**
  *
@@ -68,6 +69,12 @@ const ONLY_CATEGORY = argv.find(a => a.startsWith('--category='))?.split('=')[1]
  * 而 MRR 必须单独闸：reranker 这类改动会只动排序、不动召回，hit@K 完全看不出来。
  */
 const MIN_HIT = num('--min-hit', NaN);
+/**
+ * 覆盖率的门禁。与 `--min-hit` 分开，是因为 hit@K **只要命中任意一条**就算成功：
+ * 一道题期望两条（多法/多条），只回来一条时 hit@K 仍然是 1.000。
+ * `sem-14` 就是这种情形——期望民法典#145 与#19，实际只召回 145，指标却满分。
+ */
+const MIN_HIT_ALL = num('--min-hit-all', NaN);
 const MIN_MRR = num('--min-mrr', NaN);
 const MIN_CAT_HIT = argv
     .filter(a => a.startsWith('--min-cat-hit='))
@@ -220,6 +227,8 @@ const inDomain = rows.filter(r => (r.ranks.length > 0));
 const ood = rows.filter(r => r.ranks.length === 0);
 
 const hit = (r: Row, k: number) => r.ranks.some(x => x > 0 && x <= k);
+/** 覆盖率：**每一条** ground truth 都进了 top-K。单条 ground truth 时与 hit 等价。 */
+const hitAll = (r: Row, k: number) => r.ranks.length > 0 && r.ranks.every(x => x > 0 && x <= k);
 const rr = (r: Row) => { const f = r.ranks.filter(x => x > 0).sort((a, b) => a - b)[0]; return f ? 1 / f : 0; };
 const rate = (n: number, d: number) => d === 0 ? '—' : (n / d).toFixed(3);
 
@@ -239,6 +248,7 @@ function table(subset: Row[], label: string) {
         hit1: hasGT ? rate(subset.filter(r => hit(r, 1)).length, n) : '—',
         hit3: hasGT ? rate(subset.filter(r => hit(r, 3)).length, n) : '—',
         hitK: hasGT ? rate(subset.filter(r => hit(r, TOP_K)).length, n) : '—',
+        hitAllK: hasGT ? rate(subset.filter(r => hitAll(r, TOP_K)).length, n) : '—',
         mrr: hasGT ? (subset.reduce((a, r) => a + rr(r), 0) / n).toFixed(3) : '—',
         abstainRate: rate(subset.filter(r => r.abstained).length, n),
     };
@@ -252,13 +262,13 @@ const tables = [
 
 console.log(`\n语料 v${manifest.version} · ${manifest.totalArticles} 条 · 指纹 ${manifest.corpusHash} · 数据集 ${datasetSha1}`);
 console.log(`topK=${TOP_K}  拒答阈值=${THRESHOLD}  ${GENERATE ? '含生成' : '仅检索'}\n`);
-console.log(pad('类别', 20) + ' 题数   hit@1   hit@3  hit@' + TOP_K + '    MRR   拒答率');
-console.log('─'.repeat(72));
+console.log(pad('类别', 20) + ' 题数   hit@1   hit@3  hit@' + TOP_K + '  覆盖@' + TOP_K + '    MRR   拒答率');
+console.log('─'.repeat(82));
 for (const t of tables!) {
     console.log(
         pad(t!.label, 20) + ' ' + String(t!.n).padStart(4) + '  ' +
         t!.hit1.padStart(6) + '  ' + t!.hit3.padStart(6) + '  ' + t!.hitK.padStart(6) + '  ' +
-        t!.mrr.padStart(6) + '  ' + t!.abstainRate.padStart(6)
+        t!.hitAllK.padStart(6) + '  ' + t!.mrr.padStart(6) + '  ' + t!.abstainRate.padStart(6)
     );
 }
 
@@ -279,6 +289,14 @@ const missed = inDomain.filter(r => !hit(r, TOP_K));
 if (missed.length > 0) {
     console.log(`\n${missed.length} 条在 top-${TOP_K} 内没检索到 ground truth：`);
     for (const r of missed) console.log(`   ${r.id} [${r.topScore}] ${r.question}`);
+}
+
+// 部分召回：至少命中一条、但不是全部。hit@K 对这种情况完全沉默，
+// 而多法问答的"另一半没回来"恰好长这样。
+const partial = inDomain.filter(r => hit(r, TOP_K) && !hitAll(r, TOP_K));
+if (partial.length > 0) {
+    console.log(`\n${partial.length} 条只召回了部分 ground truth（hit@${TOP_K} 仍是 1.000）：`);
+    for (const r of partial) console.log(`   ${r.id} 名次 ${r.ranks.join(',')} ${r.question}`);
 }
 
 if (GENERATE) {
@@ -335,6 +353,7 @@ const gates: { label: string; actual: number; floor: number }[] = [];
 
 if (overall) {
     if (!Number.isNaN(MIN_HIT)) gates.push({ label: `整体 hit@${TOP_K}`, actual: Number(overall.hitK), floor: MIN_HIT });
+    if (!Number.isNaN(MIN_HIT_ALL)) gates.push({ label: `整体 覆盖@${TOP_K}`, actual: Number(overall.hitAllK), floor: MIN_HIT_ALL });
     if (!Number.isNaN(MIN_MRR)) gates.push({ label: '整体 MRR', actual: Number(overall.mrr), floor: MIN_MRR });
 }
 

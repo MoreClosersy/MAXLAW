@@ -15,7 +15,7 @@
       "judge": null
     }
   },
-  "generatedAt": "2026-09-19T08:28:34.975Z",
+  "generatedAt": "2026-11-16T10:33:15.468Z",
   "metrics": [
     {
       "label": "article_lookup",
@@ -24,6 +24,7 @@
       "hit1": "1.000",
       "hit3": "1.000",
       "hitK": "1.000",
+      "hitAllK": "1.000",
       "mrr": "1.000",
       "abstainRate": "0.000"
     },
@@ -34,6 +35,7 @@
       "hit1": "0.714",
       "hit3": "0.905",
       "hitK": "1.000",
+      "hitAllK": "0.952",
       "mrr": "0.823",
       "abstainRate": "0.000"
     },
@@ -44,6 +46,7 @@
       "hit1": "1.000",
       "hit3": "1.000",
       "hitK": "1.000",
+      "hitAllK": "1.000",
       "mrr": "1.000",
       "abstainRate": "0.000"
     },
@@ -54,6 +57,7 @@
       "hit1": "—",
       "hit3": "—",
       "hitK": "—",
+      "hitAllK": "—",
       "mrr": "—",
       "abstainRate": "0.071"
     },
@@ -64,6 +68,7 @@
       "hit1": "0.778",
       "hit3": "0.926",
       "hitK": "1.000",
+      "hitAllK": "0.963",
       "mrr": "0.862",
       "abstainRate": "0.000"
     }
