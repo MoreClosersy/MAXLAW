@@ -7,8 +7,9 @@ import { loadPrompt } from "./prompts.js";
 import { verifyCitations, summarizeCitations, CitationReport } from "./CitationVerifier.js";
 import { OUTPUT_DIR } from "./paths.js";
 import fs from "fs";
-import { decideAbstention, shouldSkipJudge, mergeAbstention } from "./abstention.js";
+import { decideAbstention, shouldSkipJudge, mergeAbstention, planSecondaryRetrieval } from "./abstention.js";
 import type { AbstentionDecision, AbstentionReason, JudgeOutcome } from "./abstention.js";
+import { normLawName } from "./laws.js";
 import {
     judgeAnswerability,
     skippedAccounting,
@@ -193,12 +194,50 @@ export async function runQuery(opts: QueryOptions): Promise<QueryResult> {
         ({ outcome, accounting: judge } = await judgeAnswerability(query, retrieved, { signal: opts.signal }));
     }
 
-    // 第三段：合并。判官失败时 mergeAbstention 原样返回 sim —— 退回**已测量的现状**，
+    // 第三段的前半：判官驱动二次检索。
+    // 只在判官**明确说缺哪部库内法律**时触发，最多补两个法、每法 2 条、最多重判一次。
+    // 这不是"再检索一遍"——那会把噪声也带进来；触发条件是确定性的（见 planSecondaryRetrieval）。
+    let contextChunks = retrieved;
+    if (ANSWERABILITY_JUDGE_ENABLED && (outcome.kind === 'judged' || outcome.kind === 'binding_mismatch')) {
+        const corpusLaws = [...new Set(retriever.getStore().sources().map(normLawName))];
+        const plan = planSecondaryRetrieval(outcome.parsed, outcome.check, retrieved, corpusLaws);
+        if (plan.length > 0) {
+            opts.onEvent?.({
+                type: 'iteration',
+                message: `判官指出缺少${plan.join('、')}的相关规定，正在该范围内补充检索…`,
+            });
+            const extra: RetrievedChunk[] = [];
+            for (const law of plan) extra.push(...await retriever.retrieveInLaw(query, law, 2));
+
+            const seen = new Set(retrieved.map(r => `${r.source}#${r.hash}`));
+            const expanded = [...retrieved, ...extra.filter(r => !seen.has(`${r.source}#${r.hash}`))];
+            if (expanded.length > retrieved.length) {
+                const second = await judgeAnswerability(query, expanded, { signal: opts.signal });
+                // 记账把两次调用加起来；secondPass 让日志/指标能区分"一次判定"和"补检索后重判"。
+                judge = {
+                    ...second.accounting,
+                    secondPass: true,
+                    usage: {
+                        promptTokens: judge.usage.promptTokens + second.accounting.usage.promptTokens,
+                        completionTokens: judge.usage.completionTokens + second.accounting.usage.completionTokens,
+                    },
+                    latencyMs: judge.latencyMs + second.accounting.latencyMs,
+                };
+                // 第二次没给出可用判定时保留第一次的结论——不能用一个失败覆盖一个已经可用的结果。
+                if (second.outcome.kind === 'judged' || second.outcome.kind === 'binding_mismatch') {
+                    outcome = second.outcome;
+                    contextChunks = expanded;
+                }
+            }
+        }
+    }
+
+    // 第三段的后半：合并。判官失败时 mergeAbstention 原样返回 sim —— 退回**已测量的现状**，
     // 而不是退回"默认拒答"（判官故障不该导致误拒）或"默认回答"（解析失败不该等于可答）。
     const decision = mergeAbstention(sim, outcome);
     const { abstained, topScore } = decision;
 
-    const context = formatContext(retrieved);
+    const context = formatContext(contextChunks);
     const systemPrompt = abstained
         ? LEGAL_SYSTEM_PROMPT + '\n\n' + ABSTENTION_INSTRUCTION
         : LEGAL_SYSTEM_PROMPT;

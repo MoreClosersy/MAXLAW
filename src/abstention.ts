@@ -24,6 +24,7 @@
  */
 import { RetrievedChunk } from './VectorStore.js';
 import { cnToNumber, extractArticleNumbers, parseArticleNo } from './articleNo.js';
+import { normLawName } from './laws.js';
 
 export interface AbstentionDecision {
     abstained: boolean;
@@ -428,6 +429,46 @@ export function mergeAbstention(sim: AbstentionDecision, outcome: JudgeOutcome):
             // 跳过时判定完全由相似度规则决定，sim 里已经是正确的结论
             return { ...sim };
     }
+}
+
+// ---------------------------------------------------------------------------
+// 判官驱动二次检索：只补"判官明确说缺的那部法"
+// ---------------------------------------------------------------------------
+
+/**
+ * 第一次判官否决后，决定**要不要**只针对缺失的法律再检索一次。
+ *
+ * 触发是确定性的，不让模型自由发挥：
+ *   1. `binding_mismatch`：判官指名了某条，但那条没在上下文里 → 到该法范围内再捞一次；
+ *   2. 判官判不可答，且 `missing`/`reason` 点名了某部**库内**法律，而本次检索里
+ *      该法一条都没有 → 到该法范围内再捞一次。
+ *
+ * 库外法律（刑法、劳动合同法…）不在 `corpusLaws` 里，不会触发——拒答它们是正确的。
+ * 返回的是法律名列表（最多 2 个），具体取哪几条由 `retrieveInLaw` 决定。
+ */
+export function planSecondaryRetrieval(
+    parsed: ParsedAnswerability,
+    check: AnswerabilityCheck,
+    retrieved: RetrievedChunk[],
+    corpusLaws: string[],
+): string[] {
+    const present = new Set(retrieved.map(r => normLawName(r.source)));
+    const planned: string[] = [];
+    const add = (law: string) => {
+        const n = normLawName(law);
+        if (corpusLaws.includes(n) && !planned.includes(n)) planned.push(n);
+    };
+
+    if (check.binding === 'not_in_context') {
+        for (const u of check.unmatched) add(u.law);
+    }
+    if (!parsed.answerable) {
+        const text = `${parsed.missing ?? ''} ${parsed.reason}`;
+        for (const law of corpusLaws) {
+            if (text.includes(law) && !present.has(law)) add(law);
+        }
+    }
+    return planned.slice(0, 2);
 }
 
 // ---------------------------------------------------------------------------

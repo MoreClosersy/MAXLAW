@@ -119,3 +119,11 @@ test('未点名条号时，排序就是余弦 —— 不做任何分层', async 
         '公司法.md#第二十三条',
     ]);
 });
+
+
+test('lawFilter：硬过滤到指定法律，二审二次检索只在那部法里捞', async () => {
+    const s = await store(ALL);
+    const hits = await s.search(QUERY, 5, { articleNos: [], lawNames: ['公司法'], lawFilter: '公司法.md' });
+    assert.ok(hits.length > 0);
+    assert.ok(hits.every(h => h.source === '公司法.md'), `混进了别的法：${titles(hits)}`);
+});

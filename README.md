@@ -491,6 +491,18 @@ run has been repeated for v2 (below). The v2 cold run lost its timings to a repo
 produced no latency samples. The v2 prompt is ~35% longer (3,589 vs 2,655 characters) and the cold
 run spent **188k prompt + 5.5k completion tokens**.
 
+**A judge-driven second pass, only when the judge names a missing law.** If the judge refuses and
+its `missing`/`reason` names an in-corpus law that retrieved nothing — or it names a requirement
+that is not in context — `runQuery` retrieves up to two articles **within that law**, re-judges
+once, and keeps the second verdict only if it is usable. It is not a general query decomposition:
+the trigger is the judge's own statement of what is missing, the pass is capped at two laws and
+two articles each, and a second refusal stands. Constructed check (`pnpm eval:secondary`, two
+judge calls): take `sem-20`, delete the 民法典 chunks, and the first verdict refuses ("缺少民法典
+关于法定代表人的规定"); the pass adds 民法典#62/#61 and the second verdict is answerable with
+requirements 公司法#11 + 民法典#61 — 5.4k prompt + 233 completion tokens. It **does not fire on
+the 69-question set** (0 in-domain refusals), so this is a measured mechanism with n=1, not a
+measured improvement; the same caveat applies as everywhere else in this section.
+
 ### Gating a build on it
 
 Retrieval metrics are deterministic — same corpus, same dataset, same model, same numbers —
@@ -744,7 +756,12 @@ the question, before a single token is generated (`src/index.ts` → `runQuery`)
    least one named article is treated as a parse failure, because a conclusion that cannot be
    audited is not a conclusion. Since prompt v2 it may name up to four (a question can need one
    article from each law), and every one of them is checked.
-3. **Deterministic cross-check and fallback** — every named article must exist in what was
+3. **Judge-driven second pass (conditional)** — if the judge refused and named an in-corpus law
+   that retrieved nothing, or named a requirement that is not in context, retrieve up to two
+   articles **within that law** and re-judge once. A second refusal stands; a failed second call
+   keeps the first verdict. This is the only place where the abstention path performs retrieval,
+   and it is bounded by the judge's own statement of what is missing.
+4. **Deterministic cross-check and fallback** — every named article must exist in what was
    retrieved (matching *both* law and number: article numbers are not unique across laws), and
    the check is a conjunction: one missing requirement voids the whole verdict. Any failure —
    parse, network, mismatch — falls back to stage 1's verdict rather than inventing one.
@@ -955,6 +972,7 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
 | `pnpm eval:signals` | Measure the similarity signals behind the abstention table. **Free, offline, deterministic** — never calls a model. |
 | `pnpm eval:abstention` | Measure the answerability judge: both error rates, stratified by `oodKind`, plus the `sim`-vs-`judge` policy counterfactual. **Costs money** — see §Abstention. |
 | `pnpm eval:citations` | Calibrate the citation content-binding check on cached answers plus injected swaps. Free/offline, but needs the gitignored answer cache. |
+| `pnpm eval:secondary` | Constructed end-to-end check of the judge-driven second pass (sem-20 with 民法典 removed). **Costs money** — two judge calls. |
 | `pnpm eval:faithfulness` | LLM-judge faithfulness: are the answer's claims supported by what was retrieved? **Costs money** — see §Faithfulness. |
 | `pnpm eval:faithfulness:calib` | The same, plus defect-injection calibration and judge-stability runs. What makes the score interpretable. |
 | `pnpm embed` | Rebuild the retrieval index and refresh the corpus manifest. |

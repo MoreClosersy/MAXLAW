@@ -587,6 +587,24 @@ export default class EmbeddingRetriever {
         return ensureLawCoverage(merged.slice(0, topK), merged, signals.lawNames);
     }
 
+    /**
+     * **只在指定法律内**再检索一次（判官驱动二次检索用）。
+     *
+     * 复用同一条查询已经算好的 embedding（embedQuery 有缓存，不额外花钱），
+     * 只把候选池硬过滤到那部法。topK 默认 2：这是补漏，不是重开一次检索——
+     * 大 pool 会把噪声也带进上下文。
+     */
+    async retrieveInLaw(query: string, law: string, topK: number = 2): Promise<RetrievedChunk[]> {
+        const queryEmbedding = await this.embedQuery(query);
+        const results = await this.vectorStore.search(queryEmbedding, topK, {
+            articleNos: [],
+            lawNames: [law],
+            articlePairs: [],
+            lawFilter: law,
+        });
+        return results.filter(r => r.document.trim().length > 0);
+    }
+
     size(): number {
         return this.vectorStore.size();
     }

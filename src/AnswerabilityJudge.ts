@@ -71,6 +71,11 @@ export interface JudgeAccounting {
     /** 判官原话，进日志与报告，**不进 UI**（未审阅的模型理由放在界面上是负债） */
     reason: string | null;
     cached: boolean;
+    /**
+     * 这次判定是否来自"判官驱动二次检索"后的**第二次**调用。
+     * 第一次（补检索前）为 false/未设置；usage/latency 是两次之和。
+     */
+    secondPass?: boolean;
     latencyMs: number;
     usage: { promptTokens: number; completionTokens: number };
     model: string;

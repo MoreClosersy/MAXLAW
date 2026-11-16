@@ -20,6 +20,11 @@ export interface QuerySignals {
      * 这样直接调用 search 的老测试/老调用方行为不变。
      */
     articlePairs?: { law: string; articleNo: number }[];
+    /**
+     * 只在指定法律的文件里检索（二次检索用）。
+     * 与 `lawNames` 不同：`lawNames` 只是加分，**不排除**别的法；这里是硬过滤。
+     */
+    lawFilter?: string;
 }
 
 /**
@@ -91,6 +96,11 @@ export default class VectorStore {
         return this.vectorStore.some(item => item.source.includes(name));
     }
 
+    /** 语料里出现过的来源文件（去重）。调用方据此得到"库里有哪些法律"。 */
+    sources(): string[] {
+        return [...new Set(this.vectorStore.map(item => item.source))];
+    }
+
     async addEmbedding(embedding: number[], chunk: ParsedChunk) {
         // 维度断言：维度不一致的向量进了库，cosineSimilarity 会静默错序甚至算出 NaN，
         // 而且很难排查（表现为"检索结果看着不相关"而不是报错）。宁可在入库这一刻就拒绝。
@@ -136,6 +146,8 @@ export default class VectorStore {
         for (const item of this.vectorStore) {
             // 标题不进检索池：它是结构信息，不是答案。理由见 splitIntoChunks 里 heading 的注释。
             if (item.kind === 'heading') continue;
+            // 二次检索的硬过滤：只看指定的那部法。`lawNames` 做不到这件事（它只是加分）。
+            if (signals.lawFilter && !item.source.includes(signals.lawFilter)) continue;
 
             const sourceHit = lawNamed && signals.lawNames.some(name => item.source.includes(name));
             // 条号必须**连同它所属的法律**一起匹配。条号跨法不唯一（民法典/公司法都有第二十三条），

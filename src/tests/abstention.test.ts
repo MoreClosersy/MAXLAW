@@ -23,6 +23,7 @@ import {
     parseAnswerabilityOutput,
     crossCheckAnswerability,
     mergeAbstention,
+    planSecondaryRetrieval,
     formatJudgeContext,
     isParseError,
     type JudgeOutcome,
@@ -485,4 +486,63 @@ test('src/abstention.ts 必须保持零副作用（不读 env、不 import index
     assert.ok(!/process\.env/.test(src), 'src/abstention.ts 不得读 process.env');
     assert.ok(!/from\s+['"]\.\/index\.js['"]/.test(src), 'src/abstention.ts 不得 import ./index.js');
     assert.ok(!/from\s+['"](node:)?fs['"]/.test(src), 'src/abstention.ts 不得 import fs');
+});
+
+// ---------------------------------------------------------------------------
+// planSecondaryRetrieval：什么时候值得再检索一次
+// ---------------------------------------------------------------------------
+
+const CORPORA = ['民法典', '公司法'];
+const onlyCompany = [chunk({ source: '公司法.md', articleNo: '第十一条' })];
+
+test('planSecondaryRetrieval：判官拒答且 missing 点名库内法律（该法一条没召回）→ 补该法', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: false, requirements: [],
+        reason: '缺少民法典关于法定代表人的规定。',
+        missing: '民法典第六十一条',
+    }));
+    assert.ok(!isParseError(parsed));
+    const check = crossCheckAnswerability(parsed, onlyCompany);
+    assert.deepEqual(planSecondaryRetrieval(parsed, check, onlyCompany, CORPORA), ['民法典']);
+});
+
+test('planSecondaryRetrieval：点名的法已经在检索结果里 → 不重复补', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: false, requirements: [], reason: '缺少民法典的规定。', missing: '民法典',
+    }));
+    assert.ok(!isParseError(parsed));
+    const retrieved = [...onlyCompany, chunk({ source: '民法典.md', articleNo: '第六十一条' })];
+    const check = crossCheckAnswerability(parsed, retrieved);
+    assert.deepEqual(planSecondaryRetrieval(parsed, check, retrieved, CORPORA), []);
+});
+
+test('planSecondaryRetrieval：库外法律（刑法）不触发补充检索', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: false, requirements: [], reason: '需要刑法第232条。', missing: '刑法',
+    }));
+    assert.ok(!isParseError(parsed));
+    const check = crossCheckAnswerability(parsed, onlyCompany);
+    assert.deepEqual(planSecondaryRetrieval(parsed, check, onlyCompany, CORPORA), []);
+});
+
+test('planSecondaryRetrieval：binding_mismatch 时按判官指名的法补', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [{ law: '民法典', articleNo: 61, quote: null }],
+        reason: 'x',
+    }));
+    assert.ok(!isParseError(parsed));
+    const check = crossCheckAnswerability(parsed, onlyCompany);
+    assert.equal(check.binding, 'not_in_context');
+    assert.deepEqual(planSecondaryRetrieval(parsed, check, onlyCompany, CORPORA), ['民法典']);
+});
+
+test('planSecondaryRetrieval：最多补两个法', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: false, requirements: [],
+        reason: '缺少民法典、公司法和劳动法的规定。', missing: '民法典、公司法',
+    }));
+    assert.ok(!isParseError(parsed));
+    const check = crossCheckAnswerability(parsed, []);
+    assert.equal(planSecondaryRetrieval(parsed, check, [], ['民法典', '公司法', '劳动法']).length, 2);
 });
