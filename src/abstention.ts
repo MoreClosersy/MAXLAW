@@ -17,7 +17,8 @@
  * `ood-11`（问刑事责任）逐字命中民法典第181条却是全部域外题的最高分，而那条讲的是民事责任。
  * 于是任何相似度阈值都会**先拒掉口语化的域内问题、最后才拦下逐字命中的域外问题**，顺序正好反了。
  *
- * 这里因此改成：检索之后问一次"这段文字里有没有答案"，而且**要求判官指名道姓说出哪一条**。
+ * 这里因此改成：检索之后问一次"这段文字里有没有答案"，而且**要求判官指名道姓说出哪一条**
+ * ——多法问题时是"哪几条"，每一条都要在检索结果里（v2）。
  * 指名而不是 yes/no，是因为指名可以被确定性交叉校验（`crossCheckAnswerability`），
  * 而一个无法核验的判定不算判定。
  */
@@ -101,12 +102,28 @@ export function shouldSkipJudge(retrieved: RetrievedChunk[], sim: AbstentionDeci
 // 判官输出：解析
 // ---------------------------------------------------------------------------
 
-export interface ParsedAnswerability {
-    answerable: boolean;
-    /** 判官指名回答该问题的条文；`answerable=false` 时为 null */
-    cited: { law: string; articleNo: number } | null;
+export interface JudgeRequirement {
+    /** 法律名，如「民法典」 */
+    law: string;
+    /** 条号数值。数值比较是硬要求，理由见 articleNo.ts */
+    articleNo: number;
     /** 判官摘录的原文（用于确定性核对"它到底读没读这一条"），可为 null */
     quote: string | null;
+}
+
+export interface ParsedAnswerability {
+    answerable: boolean;
+    /**
+     * **必答项**：判官认为回答这个问题必须引用的条文。
+     *
+     * 为什么是数组而不是单条：一个问题可以合法地需要两部法各一条
+     * （「法定代表人以公司名义…」= 公司法#11 + 民法典#61）。v1 的 `cited` 只有一个位置，
+     * 于是"只召回了一半"会被判成可答——那正是多法问答最典型的失败形状。
+     * 每一条都必须在检索结果里，否则整条判定作废（见 crossCheckAnswerability）。
+     *
+     * `answerable=true` 时至少一条；`false` 时通常为空——非空会被记成契约违规。
+     */
+    requirements: JudgeRequirement[];
     reason: string;
     /** 可答时为空；不可答时写出缺哪部法/哪类规定 */
     missing: string | null;
@@ -116,8 +133,8 @@ export interface ParseError {
     error: string;
 }
 
-export function isParseError(x: ParsedAnswerability | ParseError): x is ParseError {
-    return (x as ParseError).error !== undefined;
+export function isParseError(x: unknown): x is ParseError {
+    return typeof x === 'object' && x !== null && 'error' in x;
 }
 
 /** 把判官给的条号归一成正整数；支持 20 / "20" / "第二十条" / "第20条"。 */
@@ -146,6 +163,21 @@ function toNonEmptyString(v: unknown): string | null {
     return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
 }
 
+/** 判官最多能要求几条。正常法条问答不会需要一打条文；失控的数组会让"每条都必须在 context 里"永远对不上。 */
+const MAX_JUDGE_REQUIREMENTS = 6;
+
+function parseRequirement(v: unknown): JudgeRequirement | ParseError {
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) {
+        return { error: `requirement 不是对象：${JSON.stringify(v)}` };
+    }
+    const o = v as Record<string, unknown>;
+    const law = toNonEmptyString(o.law);
+    if (!law) return { error: 'requirement 缺少 law' };
+    const n = toArticleNumber(o.articleNo);
+    if (n === null) return { error: `requirement 的 articleNo 无法解析（收到 ${JSON.stringify(o.articleNo)}）` };
+    return { law, articleNo: n, quote: toNonEmptyString(o.quote) };
+}
+
 /**
  * 解析判官的严格 JSON 输出。**解析不出来一律返回 `{error}`，绝不默认成任何一边。**
  *
@@ -156,6 +188,11 @@ function toNonEmptyString(v: unknown): string | null {
  *
  * 「说了可答但没给条号」也判为解析失败，这一条是刻意的：接受它就会得到一个
  * `crossCheckAnswerability` 无法审计的判定，而强制指名正是选它而不是 yes/no 的全部理由。
+ *
+ * 同时接受两种形状：
+ *   v2 `{"answerable":true,"requirements":[{"law":"公司法","articleNo":11,...}, ...]}`
+ *   v1 `{"answerable":true,"law":"民法典","articleNo":20,...}` —— 解析成单条 requirement。
+ * 兼容 v1 不是为兼容而兼容：旧报告与旧缓存里全是 v1 形状，能回放才谈得上两版可比。
  */
 export function parseAnswerabilityOutput(raw: string): ParsedAnswerability | ParseError {
     const text = typeof raw === 'string' ? raw.trim() : '';
@@ -193,29 +230,41 @@ export function parseAnswerabilityOutput(raw: string): ParsedAnswerability | Par
 
     const reason = toNonEmptyString(o.reason) ?? '';
     const missing = toNonEmptyString(o.missing);
-    const quote = toNonEmptyString(o.quote);
 
-    if (o.answerable === false) {
-        // 不可答时即使它顺手写了个条号，也照收——`crossCheckAnswerability` 会记下这个契约违规
-        // 供诊断，但不改判定。
+    let requirements: JudgeRequirement[] = [];
+    if (o.requirements !== undefined) {
+        if (!Array.isArray(o.requirements)) {
+            return { error: `requirements 不是数组（收到 ${JSON.stringify(o.requirements)}）` };
+        }
+        if (o.requirements.length > MAX_JUDGE_REQUIREMENTS) {
+            return { error: `requirements 超过 ${MAX_JUDGE_REQUIREMENTS} 条（收到 ${o.requirements.length}）` };
+        }
+        for (const item of o.requirements) {
+            const r = parseRequirement(item);
+            if (isParseError(r)) return r;
+            requirements.push(r);
+        }
+    } else {
+        // v1 兼容：顶层单条。只给了 law 或只给了条号的"半条记录"不算 requirement——
+        // v1 的"不可答却顺手写了条号"是契约违规记录，不是格式错误。
         const law = toNonEmptyString(o.law);
         const n = toArticleNumber(o.articleNo);
-        return {
-            answerable: false,
-            cited: law && n !== null ? { law, articleNo: n } : null,
-            quote,
-            reason,
-            missing,
-        };
+        if (law && n !== null) requirements.push({ law, articleNo: n, quote: toNonEmptyString(o.quote) });
     }
 
-    const law = toNonEmptyString(o.law);
-    if (!law) return { error: 'answerable=true 但没给 law' };
-    const n = toArticleNumber(o.articleNo);
-    if (n === null) {
-        return { error: `answerable=true 但 articleNo 无法解析成条号（收到 ${JSON.stringify(o.articleNo)}）` };
+    // 同一对 (法, 条号) 重复出现只留第一条：重复会让"每条都在 context 里"的计数虚高。
+    const seen = new Set<string>();
+    requirements = requirements.filter(r => {
+        const key = `${r.law}#${r.articleNo}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
+    if (o.answerable === true && requirements.length === 0) {
+        return { error: 'answerable=true 但没有任何 requirement——强制指名不允许只给结论' };
     }
-    return { answerable: true, cited: { law, articleNo: n }, quote, reason, missing };
+    return { answerable: o.answerable, requirements, reason, missing };
 }
 
 // ---------------------------------------------------------------------------
@@ -224,13 +273,16 @@ export function parseAnswerabilityOutput(raw: string): ParsedAnswerability | Par
 
 export interface AnswerabilityCheck {
     /**
-     * `in_context`    —— 指名的条文确实在检索结果里
-     * `not_in_context`—— 指名了，但检索结果里没有（它是在凭记忆答，不是在读给它的东西）
+     * `in_context`    —— **每一条**指名的条文都在检索结果里
+     * `not_in_context`—— 至少一条不在（它是在凭记忆答，不是在读给它的东西）
      * `not_applicable`—— 判的是不可答，没有可校验的指名
      */
     binding: 'in_context' | 'not_in_context' | 'not_applicable';
-    matchedIndex: number | null;
-    /** 判官摘的原文是否真的出现在它指名的那条正文里。**只用于诊断，从不翻转判定。** */
+    /** 与 `requirements` 同序：每条命中的检索下标，未命中为 null */
+    matchedIndexes: (number | null)[];
+    /** 没能在检索结果里找到的必答项（法名+条号） */
+    unmatched: { law: string; articleNo: number }[];
+    /** 全部摘录都核对通过才是 true；一条可核对的摘录都没有时是 null。**只用于诊断，从不翻转判定。** */
     quoteVerified: boolean | null;
     /** 契约违规：判了不可答却还是写了条号。仅记录。 */
     refusalNamedArticle: boolean;
@@ -259,11 +311,14 @@ function chunkArticleNumber(c: RetrievedChunk): number | null {
 }
 
 /**
- * 把判官的指名和检索结果对一遍。**必须同时匹配法和条号。**
+ * 把判官的**每一条**指名和检索结果对一遍。**必须同时匹配法和条号。**
  *
  * 只比条号是不够的：条号跨法不唯一（民法典第23条和公司法第23条都存在），
  * 只按数字匹配的实现会放过"判官说的是公司法第23条、而检索到的只有民法典第23条"——
  * 那正是强制指名要拦住的东西，放它过去整个设计就白做了。
+ *
+ * 多需求时是**合取**：任何一条对不上，整条判定就不能算数（binding=not_in_context），
+ * 退回相似度。不能"对上一半就算可答"——那正是 v1 单条 schema 在多法问题上的漏洞。
  *
  * `quoteVerified` 是"判官指名了某条但其实没在读它"的确定性抓手，
  * 但**从不参与判定**：字符串匹配是脆的（摘录被截断、条号写法不一致），
@@ -276,43 +331,57 @@ export function crossCheckAnswerability(
     if (!parsed.answerable) {
         return {
             binding: 'not_applicable',
-            matchedIndex: null,
+            matchedIndexes: [],
+            unmatched: [],
             quoteVerified: null,
-            refusalNamedArticle: parsed.cited !== null,
+            refusalNamedArticle: parsed.requirements.length > 0,
         };
     }
 
-    const cited = parsed.cited;
-    if (!cited) {
-        // parseAnswerabilityOutput 保证可答时 cited 非空；这里是类型收窄的兜底
-        return { binding: 'not_in_context', matchedIndex: null, quoteVerified: null, refusalNamedArticle: false };
+    const matchedIndexes: (number | null)[] = [];
+    const unmatched: { law: string; articleNo: number }[] = [];
+
+    for (const req of parsed.requirements) {
+        const wantLaw = normLaw(req.law);
+        let matched: number | null = null;
+        for (let i = 0; i < retrieved.length; i++) {
+            const c = retrieved[i];
+            const gotLaw = normLaw(c.source);
+            const lawOk = wantLaw !== '' && gotLaw !== ''
+                && (wantLaw === gotLaw || wantLaw.includes(gotLaw) || gotLaw.includes(wantLaw));
+            if (!lawOk) continue;
+            if (chunkArticleNumber(c) !== req.articleNo) continue;
+            matched = i;
+            break;
+        }
+        matchedIndexes.push(matched);
+        if (matched === null) unmatched.push({ law: req.law, articleNo: req.articleNo });
     }
 
-    const wantLaw = normLaw(cited.law);
-    let matchedIndex: number | null = null;
-    for (let i = 0; i < retrieved.length; i++) {
-        const c = retrieved[i];
-        const gotLaw = normLaw(c.source);
-        const lawOk = wantLaw !== '' && gotLaw !== ''
-            && (wantLaw === gotLaw || wantLaw.includes(gotLaw) || gotLaw.includes(wantLaw));
-        if (!lawOk) continue;
-        if (chunkArticleNumber(c) !== cited.articleNo) continue;
-        matchedIndex = i;
-        break;
+    if (unmatched.length > 0) {
+        return { binding: 'not_in_context', matchedIndexes, unmatched, quoteVerified: null, refusalNamedArticle: false };
     }
 
-    if (matchedIndex === null) {
-        return { binding: 'not_in_context', matchedIndex: null, quoteVerified: null, refusalNamedArticle: false };
-    }
-
-    let quoteVerified: boolean | null = null;
-    if (parsed.quote) {
-        const q = normText(parsed.quote);
+    let anyCheckable = false;
+    let allQuotesFound = true;
+    for (let i = 0; i < parsed.requirements.length; i++) {
+        const quote = parsed.requirements[i].quote;
+        if (!quote) continue;
+        const q = normText(quote);
         // 太短的摘录（如两个字的词）匹配上没有信息量，判为"无法核对"
-        quoteVerified = q.length >= 6 ? normText(retrieved[matchedIndex].document).includes(q) : null;
+        if (q.length < 6) continue;
+        anyCheckable = true;
+        const doc = retrieved[matchedIndexes[i] as number].document;
+        if (!normText(doc).includes(q)) allQuotesFound = false;
     }
 
-    return { binding: 'in_context', matchedIndex, quoteVerified, refusalNamedArticle: false };
+    return {
+        binding: 'in_context',
+        matchedIndexes,
+        unmatched: [],
+        quoteVerified: anyCheckable ? allQuotesFound : null,
+        refusalNamedArticle: false,
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -339,7 +408,8 @@ export function mergeAbstention(sim: AbstentionDecision, outcome: JudgeOutcome):
     switch (outcome.kind) {
         case 'judged':
             if (outcome.check.binding === 'not_in_context') {
-                // 说了可答却指不出检索结果里的条文 —— 它的判断来自记忆，不是来自给它的材料
+                // 说了可答却**有**指不出的必答项 —— 至少有一半判断来自记忆，不是来自给它的材料。
+                // 多需求是合取：缺一条就整条判定作废，不能"对上一半就算可答"。
                 return { ...sim, reason: 'judge_binding_mismatch' };
             }
             return {

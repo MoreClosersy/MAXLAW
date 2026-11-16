@@ -44,21 +44,27 @@ import {
 export const ANSWERABILITY_JUDGE_ENABLED = process.env.ANSWERABILITY_JUDGE !== '0';
 export const ANSWERABILITY_JUDGE_MODEL = process.env.ANSWERABILITY_JUDGE_MODEL ?? 'gpt-4o';
 export const ANSWERABILITY_JUDGE_TIMEOUT_MS = Number(process.env.ANSWERABILITY_JUDGE_TIMEOUT_MS ?? 8_000);
-export const ANSWERABILITY_JUDGE_PROMPT_VERSION = Number(process.env.ANSWERABILITY_JUDGE_PROMPT_VERSION ?? 1);
+export const ANSWERABILITY_JUDGE_PROMPT_VERSION = Number(process.env.ANSWERABILITY_JUDGE_PROMPT_VERSION ?? 2);
 
 export interface JudgeAccounting {
     outcome: 'judged' | 'skipped' | 'binding_mismatch' | 'parse_failure' | 'error';
     skipReason: JudgeSkipReason | null;
     /** 仅 judged / binding_mismatch 有值 */
     answerable: boolean | null;
-    cited: { law: string; articleNo: number } | null;
+    /** 判官指名的必答项（法+条号），可多条；跳过/失败时为空数组 */
+    requirements: { law: string; articleNo: number }[];
     binding: 'in_context' | 'not_in_context' | 'not_applicable' | null;
-    /** 判官摘的原文是否真在所指数那条里。仅诊断，从不翻转判定。 */
+    /** 全部指名条文的摘录是否都核对通过。仅诊断，从不翻转判定。 */
     quoteVerified: boolean | null;
     /**
-     * 判官指名的条文在**这次检索结果里**的分数。仅诊断，从不参与判定。
+     * 每条指名条文在**这次检索结果里**的分数，与 `requirements` 同序（对不上的条目不产生分数）。
      * `eval/abstention.ts` 用它扫"判官之后再加一道检索分门还有没有增量信息"——
      * 那个门的形状是 `answerable && namedScore < t`，所以判的是**低分冒充答案**。
+     */
+    namedScores: number[];
+    /**
+     * `namedScores` 的**最低分**（最弱一环）。旧字段是单条，现在多条时取最低：
+     * "有一条低分冒充答案"就足以说明问题，取最高分会把最弱的那条藏起来。
      * 不可答 / 指名不在检索结果里 / 硬跳过 → null（null 不是 0，不能混）。
      */
     namedScore: number | null;
@@ -187,9 +193,10 @@ export function skippedAccounting(reason: JudgeSkipReason, model: string = ANSWE
         outcome: 'skipped',
         skipReason: reason,
         answerable: null,
-        cited: null,
+        requirements: [],
         binding: null,
         quoteVerified: null,
+        namedScores: [],
         namedScore: null,
         reason: null,
         cached: false,
@@ -207,13 +214,16 @@ function judgeKey(model: string, question: string, context: string): string {
 }
 
 /**
- * 判官指名的条文在检索结果里的分数。别名解析用的是 `check.matchedIndex`，
+ * 判官指名的条文在检索结果里的分数。别名解析用的是 `check.matchedIndexes`，
  * **不在这里重算一遍法律名归一化**——那会造出这套语义的第二个事实来源（§10.13 坑 1）。
  */
-function namedScoreFor(outcome: JudgeOutcome, retrieved: RetrievedChunk[]): number | null {
-    if (outcome.kind !== 'judged' && outcome.kind !== 'binding_mismatch') return null;
-    const i = outcome.check.matchedIndex;
-    return i === null ? null : retrieved[i]?.score ?? null;
+function namedScoresFor(outcome: JudgeOutcome, retrieved: RetrievedChunk[]): number[] {
+    if (outcome.kind !== 'judged' && outcome.kind !== 'binding_mismatch') return [];
+    const out: number[] = [];
+    for (const i of outcome.check.matchedIndexes) {
+        if (i !== null && retrieved[i]) out.push(retrieved[i].score);
+    }
+    return out;
 }
 
 function accountingFor(
@@ -222,17 +232,18 @@ function accountingFor(
     extra: {
         cached: boolean; latencyMs: number;
         usage: { promptTokens: number; completionTokens: number };
-        namedScore: number | null;
+        namedScores: number[];
     },
 ): JudgeAccounting {
     const base = {
         skipReason: null as JudgeSkipReason | null,
         reason: null as string | null,
         answerable: null as boolean | null,
-        cited: null as { law: string; articleNo: number } | null,
+        requirements: [] as { law: string; articleNo: number }[],
         binding: null as JudgeAccounting['binding'],
         quoteVerified: null as boolean | null,
-        namedScore: extra.namedScore,
+        namedScores: extra.namedScores,
+        namedScore: extra.namedScores.length > 0 ? Math.min(...extra.namedScores) : null,
         cached: extra.cached,
         latencyMs: extra.latencyMs,
         usage: extra.usage,
@@ -246,7 +257,7 @@ function accountingFor(
                 ...base,
                 outcome: outcome.kind === 'judged' ? 'judged' as const : 'binding_mismatch' as const,
                 answerable: outcome.parsed.answerable,
-                cited: outcome.parsed.cited,
+                requirements: outcome.parsed.requirements.map(r => ({ law: r.law, articleNo: r.articleNo })),
                 binding: outcome.check.binding,
                 quoteVerified: outcome.check.quoteVerified,
                 reason: outcome.parsed.reason || null,
@@ -293,7 +304,7 @@ export async function judgeAnswerability(
             outcome: hit.outcome,
             accounting: accountingFor(hit.outcome, model, {
                 cached: true, latencyMs: 0, usage: hit.usage,
-                namedScore: namedScoreFor(hit.outcome, retrieved),
+                namedScores: namedScoresFor(hit.outcome, retrieved),
             }),
         };
     }
@@ -314,7 +325,7 @@ export async function judgeAnswerability(
         return {
             outcome,
             accounting: accountingFor(outcome, model, {
-                cached: false, latencyMs: 0, usage: ZERO_USAGE, namedScore: null,
+                cached: false, latencyMs: 0, usage: ZERO_USAGE, namedScores: [],
             }),
         };
     }
@@ -377,9 +388,11 @@ export async function judgeAnswerability(
                 if (outcome.kind === 'binding_mismatch') {
                     // 判官说"可答"，但它指名的条号不在喂给它的检索结果里 —— 它在凭记忆答，不是在读东西。
                     // 这不是"可答"也不是"不可答"，是一次无法核验的判定，所以退回相似度。
+                    const missing = outcome.check.unmatched
+                        .map(u => `${u.law}第${u.articleNo}条`)
+                        .join('、');
                     console.warn(
-                        `[judge] binding_mismatch：判官指名 ${parsed.cited?.law}第${parsed.cited?.articleNo}条，` +
-                        `但检索结果里没有这一对。原话：${truncate(parsed.reason)}`,
+                        `[judge] binding_mismatch：判官指名 ${missing}，但检索结果里没有这一对。原话：${truncate(parsed.reason)}`,
                     );
                 }
             }
@@ -390,7 +403,7 @@ export async function judgeAnswerability(
                 outcome,
                 accounting: accountingFor(outcome, model, {
                     cached: false, latencyMs: Date.now() - started, usage: spent,
-                    namedScore: namedScoreFor(outcome, retrieved),
+                    namedScores: namedScoresFor(outcome, retrieved),
                 }),
             };
         } catch (e) {
@@ -407,7 +420,7 @@ export async function judgeAnswerability(
     return {
         outcome,
         accounting: accountingFor(outcome, model, {
-            cached: false, latencyMs: Date.now() - started, usage: spent, namedScore: null,
+            cached: false, latencyMs: Date.now() - started, usage: spent, namedScores: [],
         }),
     };
 }

@@ -21,7 +21,7 @@ and the replacement is held to the same standard.
 - **Streaming answers with citations.** The web UI consumes a Server-Sent Events stream and
   renders tokens as they arrive, alongside the retrieved articles.
 - **Abstention — implemented, measured, and replaced.** Questions the corpus cannot answer are
-  refused by an LLM judge that must **name** the article answering the question; naming nothing
+  refused by an LLM judge that must **name** the article(s) answering the question; naming nothing
   means refusing. The previous design — a threshold on the top retrieval score — is still in the
   tree as a pre-filter and a fallback, but it is no longer the mechanism: measured, it refused 3
   of 42 out-of-domain questions and the signal itself does not separate in-domain from
@@ -342,12 +342,12 @@ instructive rather than reassuring: what the judge wrongly rejected is a *verbat
 correctly cited, actually retrieved article* — the exact opposite of the citation swaps it wrongly
 accepts. Building a hand-labelled precision set is the remaining piece of this metric's foundation.
 
-### Abstention: the threshold is gone, replaced by a judge that has to name an article
+### Abstention: the threshold is gone, replaced by a judge that has to name the article(s)
 
 `pnpm eval:abstention` — **costs money**, needs `OPENAI_API_KEY`, and is deliberately not in CI.
 
 Everything above concludes that abstention cannot be a threshold on a similarity score. The
-replacement is one LLM call after retrieval, and it must **name** the article that answers the
+replacement is one LLM call after retrieval, and it must **name** the article(s) that answer the
 question: a verdict the code cannot audit is not a verdict. 69 questions, judge `gpt-4o`, judge
 prompt v1, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775`:
 
@@ -437,6 +437,18 @@ under two minutes, except that **latency is then not measured** — the script p
 than a 0 ms it did not observe. The judge cache lives in `cache/answerability-judge.json`, keyed on
 `sha1(model, promptVersion, question, context)`, so bumping the prompt version invalidates every
 entry and re-prices the run.
+
+**v2 (multi-requirement) is implemented and has not been measured.** The judge now returns
+`requirements: [{law, articleNo, quote}]` instead of a single `cited`, and
+`crossCheckAnswerability` requires *all* of them to be in the retrieved set — so a multi-law
+question that comes back half-retrieved is no longer accepted as answerable, it falls back to
+the similarity verdict. Old v1 JSON still parses (as a single requirement), so existing reports
+replay. **Every number in this section is v1**: 42/42, 0/27, 22/23, the 4.5 s latency, the
+`--judge-model-b` flip rate. Bumping the prompt version invalidates `cache/answerability-judge.json`
+by design, and `pnpm eval:abstention` needs network and about $0.5 to produce v2 numbers. Until
+that run exists, v2 is an unmeasured change — shipped behind a schema that is unit-tested
+(`src/tests/abstention.test.ts`), not behind a number. Saying so is the point; the alternative
+was to leave v1's 22/23 on the page as if it still described the shipped prompt.
 
 ### Gating a build on it
 
@@ -545,7 +557,7 @@ EMBEDDING_BASE_URL=https://router.huggingface.co/hf-inference
 | `ANSWERABILITY_JUDGE` | on | `0` disables the answerability judge entirely — the escape hatch. Abstention then reverts to the similarity threshold alone, i.e. exactly the pre-judge behaviour. |
 | `ANSWERABILITY_JUDGE_MODEL` | `gpt-4o` | Judge model. **Deliberately separate from `JUDGE_MODEL`**: sharing one would silently invalidate the other's cache and move two unrelated measurements together. |
 | `ANSWERABILITY_JUDGE_TIMEOUT_MS` | `8000` | Per-attempt timeout. It genuinely cancels the HTTP request (`AbortSignal.any`), unlike the private `withTimeout` in `src/Agent.ts`. |
-| `ANSWERABILITY_JUDGE_PROMPT_VERSION` | `1` | Loads `prompts/answerability-judge.v<N>.md`. Bumping it misses the whole judge cache — that is the point. |
+| `ANSWERABILITY_JUDGE_PROMPT_VERSION` | `2` | Loads `prompts/answerability-judge.v<N>.md`. v2 returns a list of required articles instead of one. Bumping it misses the whole judge cache — that is the point. |
 
 **Token accounting:** `QueryResult.usage` covers the **generation model only**. The judge's
 tokens are reported separately in `QueryResult.judge.usage`, so the total for one query is
@@ -658,13 +670,14 @@ the question, before a single token is generated (`src/index.ts` → `runQuery`)
    article that exists in the corpus. Both are free and neither can be wrong; asking a model
    about them would only add a way to get them wrong.
 2. **The answerability judge** (`src/AnswerabilityJudge.ts`) — one LLM call that must **name**
-   the article that answers the question. It cannot say "yes, roughly": a verdict without a
-   named article is treated as a parse failure, because a conclusion that cannot be audited
-   is not a conclusion.
-3. **Deterministic cross-check and fallback** — the named article must exist in what was
+   the article(s) that answer the question. It cannot say "yes, roughly": a verdict without at
+   least one named article is treated as a parse failure, because a conclusion that cannot be
+   audited is not a conclusion. Since prompt v2 it may name up to four (a question can need one
+   article from each law), and every one of them is checked.
+3. **Deterministic cross-check and fallback** — every named article must exist in what was
    retrieved (matching *both* law and number: article numbers are not unique across laws), and
-   any failure — parse, network, mismatch — falls back to stage 1's verdict rather than
-   inventing one.
+   the check is a conjunction: one missing requirement voids the whole verdict. Any failure —
+   parse, network, mismatch — falls back to stage 1's verdict rather than inventing one.
 
 Each stage exists because the previous one cannot do its job alone, and the ordering matters:
 stage 1 is free but nearly blind, stage 2 is accurate but costs money and can fail, and stage 3
@@ -814,8 +827,10 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   of the model's own knowledge — 42/42 of the out-of-domain set, see §Abstention.
 - **Multi-law recall is only handled when the question names the laws.** Pairing and per-law
   coverage are deterministic and unit-tested, but nothing infers a *second* law the user did
-  not name; the judge names one article, so "one requirement met, one missing" is not
-  detectable end to end. coverage@5 is 0.963 and `sem-14` is the one known partial miss.
+  not name. The judge can now return multiple requirements (prompt v2), so a half-retrieved
+  multi-law answer is no longer *accepted* as answerable — but v2 is not yet re-measured (see
+  §Abstention), and retrieval still guarantees coverage only for named laws. coverage@5 is 0.963
+  and `sem-14` is the one known partial miss.
 - **Retrieval is lexical + dense, not hybrid.** BM25 with reciprocal-rank fusion is planned
   but not implemented, so exact-term queries relying on rare wording can under-retrieve.
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage

@@ -176,7 +176,8 @@ for (const c of cases) {
         // 没问就是没问。answerable 留 null 而不是 false —— "没判定"绝不能被读成"判为不可答"。
         judge = {
             outcome: 'skipped', skipReason: hardSkip ? skip.reason : 'sim_abstain',
-            answerable: null, cited: null, binding: null, quoteVerified: null, namedScore: null, reason: null,
+            answerable: null, requirements: [], binding: null, quoteVerified: null,
+            namedScores: [], namedScore: null, reason: null,
             cached: false, latencyMs: 0, usage: { promptTokens: 0, completionTokens: 0 },
             model: ANSWERABILITY_JUDGE_MODEL, promptVersion: ANSWERABILITY_JUDGE_PROMPT_VERSION,
         };
@@ -214,7 +215,7 @@ for (const c of cases) {
     const mark = judge.outcome === 'judged' ? (judge.answerable ? '可答' : '不可答') : judge.outcome;
     process.stdout.write(VERBOSE
         ? `  ${c.id.padEnd(10)} sim=${sim.abstained ? '拒' : '答'} 判官=${mark}` +
-          `${judge.cited ? ` (${judge.cited.law}第${judge.cited.articleNo}条)` : ''}` +
+          `${judge.requirements.length ? ` (${judge.requirements.map(q => `${q.law}第${q.articleNo}条`).join('、')})` : ''}` +
           `${judge.cached ? ' [缓存]' : ''} ${judge.latencyMs}ms\n`
         : '.');
 }
@@ -393,14 +394,16 @@ for (const h of HARD) {
     console.log(`     ${h.why}`);
     console.log(`     相似度：${r.simAbstained ? '拒答' : '回答'}（最高分 ${r.simTopScore}）` +
         `  判官：${r.judge.outcome}${r.judge.answerable === null ? '' : r.judge.answerable ? ' 可答' : ' 不可答'}` +
-        `${r.judge.cited ? ` 指名 ${r.judge.cited.law}第${r.judge.cited.articleNo}条` : ''}` +
+        `${r.judge.requirements.length ? ` 指名 ${r.judge.requirements.map(q => `${q.law}第${q.articleNo}条`).join('、')}` : ''}` +
         `${r.judge.quoteVerified === null ? '' : ` 引文核对=${r.judge.quoteVerified}`}`);
     console.log(`     判官原话：${r.judge.reason ?? '（无）'}`);
-    if (r.judge.cited && !abstained && r.expected.length > 0) {
+    if (r.judge.requirements.length > 0 && !abstained && r.expected.length > 0) {
         const want = r.expected[0];
-        const hitExpected = r.judge.cited.articleNo === want.articleNo;
-        console.log(`     ${hitExpected ? '✅' : '❌'} 指名的条号与 ground truth ${want.source}#${want.articleNo} ` +
-            `${hitExpected ? '一致' : '不一致'}（不一致不算错，但要看一眼）`);
+        const hitExpected = r.judge.requirements.some(q =>
+            q.articleNo === want.articleNo && normLawName(q.law) === normLawName(want.source));
+        const named = r.judge.requirements.map(q => `${q.law}第${q.articleNo}条`).join('、');
+        console.log(`     ${hitExpected ? '✅' : '❌'} 指名（${named}）与 ground truth ${want.source}#${want.articleNo} ` +
+            `${hitExpected ? '有一致项' : '均不一致'}（不一致不算错，但要瞥一眼）`);
     }
 }
 console.log('  说明："理由错了也算 ❌"这条**由强制指名机制化**：可答必须指名到条，');
@@ -425,25 +428,42 @@ if (failed.length > 0) {
 // 精度代理：判官指名的条号 vs ground truth
 //
 // 数据集每条域内题都带 expected[{source, articleNo}]，这是**免费的精度指纹**：
-// 判官按定义必须指名一条，那名指得对不对是可确定性核对的。
+// 判官按定义必须**至少**指名一条（v2 起可以多条），指得对不对是可确定性核对的。
 // §10.13 惋惜过"手工标注的精度集是这套指标还缺的那块地基"，这个不花一分钱就补上了一部分。
 // **不一致不算错**（README 的 Limitations 说过：ground truth 只是"一条"正确答案，
 // sem-01 的承运人责任那条可能才是更好的答案），所以只作诊断打印、不计分。
 // ---------------------------------------------------------------------------
 console.log(`\n=== 判官指名的条号 vs ground truth（仅诊断，不计分）===`);
-let namedTotal = 0, namedHit = 0;
+// 法名归一：expected.source 是文件名（民法典.md），判官写的是「民法典」，两边都归一再比。
+const normLawName = (s: string) => s
+    .replace(/中华人民共和国/g, '')
+    .replace(/[《》\s]/g, '')
+    .replace(/\.md$/i, '')
+    .trim();
+
+const answered = rows.filter(r =>
+    r.expected.length > 0 && r.judge.outcome === 'judged' && r.judge.answerable && r.judge.requirements.length > 0);
+let namedTotal = 0, namedHit = 0, multiRequirementQuestions = 0, fullyCovered = 0;
 const mismatches: string[] = [];
-for (const r of rows) {
-    if (r.expected.length === 0) continue;
-    if (r.judge.outcome !== 'judged' || !r.judge.answerable || !r.judge.cited) continue;
-    namedTotal++;
-    const hit = r.expected.some(e => e.articleNo === r.judge.cited!.articleNo);
-    if (hit) namedHit++;
-    else mismatches.push(`${r.id} 判官指名 ${r.judge.cited.law}第${r.judge.cited.articleNo}条，` +
-        `ground truth ${r.expected.map(e => `${e.source}#${e.articleNo}`).join('/')}`);
+for (const r of answered) {
+    if (r.judge.requirements.length > 1) multiRequirementQuestions++;
+    let allHit = true;
+    for (const req of r.judge.requirements) {
+        namedTotal++;
+        const hit = r.expected.some(e =>
+            e.articleNo === req.articleNo && normLawName(e.source) === normLawName(req.law));
+        if (hit) namedHit++;
+        else {
+            allHit = false;
+            mismatches.push(`${r.id} 判官指名 ${req.law}第${req.articleNo}条，` +
+                `ground truth ${r.expected.map(e => `${e.source}#${e.articleNo}`).join('/')}`);
+        }
+    }
+    if (allHit) fullyCovered++;
 }
-console.log(`  判官给了可答判定且有 ground truth 的题：${namedTotal} 条`);
-console.log(`  其中指名命中的：${namedHit}/${namedTotal}${namedTotal ? ` = ${(namedHit / namedTotal).toFixed(3)}` : ''}`);
+console.log(`  判官给了可答判定且有 ground truth 的题：${answered.length} 条（其中给出多条必答项的 ${multiRequirementQuestions} 条）`);
+console.log(`  指名条目命中：${namedHit}/${namedTotal}${namedTotal ? ` = ${(namedHit / namedTotal).toFixed(3)}` : ''}`);
+console.log(`  全部指名项都命中的题：${fullyCovered}/${answered.length}`);
 for (const m of mismatches) console.log(`    · ${m}`);
 
 // ---------------------------------------------------------------------------

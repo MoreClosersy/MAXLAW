@@ -127,8 +127,9 @@ test('parseAnswerabilityOutput: 良构的可答输出', () => {
     }));
     assert.ok(!isParseError(r));
     assert.equal(r.answerable, true);
-    assert.deepEqual(r.cited, { law: '民法典', articleNo: 20 });
-    assert.ok(r.quote && r.quote.length > 0);
+    assert.deepEqual(r.requirements, [{
+        law: '民法典', articleNo: 20, quote: '不满八周岁的未成年人为无民事行为能力人',
+    }]);
 });
 
 test('parseAnswerabilityOutput: 良构的不可答输出', () => {
@@ -139,20 +140,25 @@ test('parseAnswerabilityOutput: 良构的不可答输出', () => {
     }));
     assert.ok(!isParseError(r));
     assert.equal(r.answerable, false);
-    assert.equal(r.cited, null);
+    assert.deepEqual(r.requirements, []);
     assert.ok(r.missing && r.missing.length > 0);
 });
 
 test('parseAnswerabilityOutput: 剥掉 ```json 围栏', () => {
+    // v1 的单条形状（顶层 law/articleNo）必须仍然能解析成一条 requirement：
+    // 旧报告与旧缓存里全是这个形状，不能因为换了 schema 就读不出来。
     const r = parseAnswerabilityOutput('```json\n{"answerable":true,"law":"民法典","articleNo":188,"reason":"x"}\n```');
     assert.ok(!isParseError(r));
-    assert.deepEqual(r.cited, { law: '民法典', articleNo: 188 });
+    assert.deepEqual(r.requirements.map(x => ({ law: x.law, articleNo: x.articleNo })), [
+        { law: '民法典', articleNo: 188 },
+    ]);
 });
 
 test('parseAnswerabilityOutput: 从前后散文里取出 JSON 对象', () => {
     const r = parseAnswerabilityOutput('好的，我的判断是：{"answerable":true,"law":"公司法","articleNo":23,"reason":"x"} 以上。');
     assert.ok(!isParseError(r));
-    assert.deepEqual(r.cited, { law: '公司法', articleNo: 23 });
+    assert.equal(r.requirements[0].law, '公司法');
+    assert.equal(r.requirements[0].articleNo, 23);
 });
 
 test('parseAnswerabilityOutput: 条号认中文数字写法（钉住 §10.13 的坑 1）', () => {
@@ -161,7 +167,7 @@ test('parseAnswerabilityOutput: 条号认中文数字写法（钉住 §10.13 的
     for (const v of ['第二十条', '第20条', '20', 20]) {
         const r = parseAnswerabilityOutput(JSON.stringify({ answerable: true, law: '民法典', articleNo: v, reason: 'x' }));
         assert.ok(!isParseError(r), `articleNo=${JSON.stringify(v)} 应当能解析`);
-        assert.equal(r.cited!.articleNo, 20);
+        assert.equal(r.requirements[0].articleNo, 20);
     }
 });
 
@@ -197,10 +203,64 @@ test('parseAnswerabilityOutput: 判了不可答却仍写了条号 → 通过，�
     }));
     assert.ok(!isParseError(r));
     assert.equal(r.answerable, false);
-    assert.deepEqual(r.cited, { law: '民法典', articleNo: 181 }, '条号要留着，好让交叉校验记下这个违规');
+    assert.deepEqual(r.requirements, [{ law: '民法典', articleNo: 181, quote: null }],
+        '条号要留着，好让交叉校验记下这个违规');
     const check = crossCheckAnswerability(r, [chunk({ source: '民法典.md', articleNo: '第一百八十一条' })]);
     assert.equal(check.refusalNamedArticle, true);
     assert.equal(check.binding, 'not_applicable');
+});
+
+
+test('parseAnswerabilityOutput: v2 多条必答项', () => {
+    const r = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [
+            { law: '公司法', articleNo: 11, quote: '法定代表人以公司名义从事的民事活动' },
+            { law: '民法典', articleNo: 61, quote: '依照法律或者法人章程的规定' },
+        ],
+        reason: '两法各一条', missing: null,
+    }));
+    assert.ok(!isParseError(r));
+    assert.deepEqual(r.requirements.map(x => ({ law: x.law, articleNo: x.articleNo })), [
+        { law: '公司法', articleNo: 11 },
+        { law: '民法典', articleNo: 61 },
+    ]);
+});
+
+test('parseAnswerabilityOutput: 可答但一条必答项都没有 → error', () => {
+    // 包括 v1 形状的"只给结论、不给条号"：换了 schema 也不能把这条硬契约放松。
+    for (const input of [
+        '{"answerable":true,"requirements":[]}',
+        '{"answerable":true}',
+        '{"answerable":true,"law":"民法典"}',
+    ]) {
+        assert.ok(isParseError(parseAnswerabilityOutput(input)), `应当报错：${input}`);
+    }
+});
+
+test('parseAnswerabilityOutput: requirements 形状不对 → error，不做部分接受', () => {
+    const bad = [
+        '{"answerable":true,"requirements":"民法典第20条"}',
+        '{"answerable":true,"requirements":[{"law":"民法典"}]}',
+        '{"answerable":true,"requirements":[{"articleNo":20}]}',
+        '{"answerable":true,"requirements":[{"law":"","articleNo":20}]}',
+        '{"answerable":true,"requirements":[{"law":"民法典","articleNo":"不知道"}]}',
+        // 超过上限：失控的数组会让"每条都必须在 context 里"永远对不上
+        `{"answerable":true,"requirements":[${Array.from({ length: 7 }, () => '{"law":"民法典","articleNo":1}').join(',')}]}`,
+    ];
+    for (const input of bad) assert.ok(isParseError(parseAnswerabilityOutput(input)), `应当报错：${input}`);
+});
+
+test('parseAnswerabilityOutput: 重复的必答项只留一条', () => {
+    const r = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [
+            { law: '民法典', articleNo: 20 },
+            { law: '民法典', articleNo: 20 },
+        ],
+    }));
+    assert.ok(!isParseError(r));
+    assert.equal(r.requirements.length, 1);
 });
 
 // ---------------------------------------------------------------------------
@@ -218,7 +278,8 @@ test('crossCheckAnswerability: 指名的条文在检索结果里 → in_context'
     ];
     const check = crossCheckAnswerability(parsed, retrieved);
     assert.equal(check.binding, 'in_context');
-    assert.equal(check.matchedIndex, 1);
+    assert.deepEqual(check.matchedIndexes, [1]);
+    assert.deepEqual(check.unmatched, []);
     assert.equal(check.quoteVerified, true);
 });
 
@@ -232,7 +293,8 @@ test('crossCheckAnswerability: 条号对但法是另一部 → not_in_context（
     const retrieved = [chunk({ source: '民法典.md', articleNo: '第二十三条' })];
     const check = crossCheckAnswerability(parsed, retrieved);
     assert.equal(check.binding, 'not_in_context', '跨法的同名条号不算是同一个条文');
-    assert.equal(check.matchedIndex, null);
+    assert.deepEqual(check.matchedIndexes, [null]);
+    assert.deepEqual(check.unmatched, [{ law: '公司法', articleNo: 23 }]);
 });
 
 test('crossCheckAnswerability: 法名带「中华人民共和国」/书名号/`.md` 都要能对上', () => {
@@ -268,14 +330,79 @@ test('crossCheckAnswerability: 摘录对不上只记账，不改判定', () => {
     assert.equal(merged.reason, 'answered');
 });
 
+
+test('crossCheckAnswerability: 多法多必答项全部命中 → in_context', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [
+            { law: '公司法', articleNo: 11, quote: '法定代表人以公司名义从事的民事活动，其法律后果由公司承受。' },
+            { law: '民法典', articleNo: 61, quote: '依照法律或者法人章程的规定，代表法人从事民事活动的负责人，为法人的法定代表人。' },
+        ],
+        reason: 'x',
+    }));
+    assert.ok(!isParseError(parsed));
+    const retrieved = [
+        chunk({
+            source: '民法典.md', articleNo: '第六十一条',
+            document: '依照法律或者法人章程的规定，代表法人从事民事活动的负责人，为法人的法定代表人。',
+        }),
+        chunk({
+            source: '公司法.md', articleNo: '第十一条',
+            document: '法定代表人以公司名义从事的民事活动，其法律后果由公司承受。',
+        }),
+    ];
+    const check = crossCheckAnswerability(parsed, retrieved);
+    assert.equal(check.binding, 'in_context');
+    // 顺序跟着 requirements，不是跟着检索名次：公司法那条在第 2 位
+    assert.deepEqual(check.matchedIndexes, [1, 0]);
+    assert.equal(check.quoteVerified, true);
+});
+
+test('crossCheckAnswerability: 多法问题只召回一半 → not_in_context，绝不"对上一半就算可答"', () => {
+    // 这正是 v1 单条 schema 的漏洞：判官只报公司法#11，就会判成可答，
+    // 而答案只覆盖了半个问题。v2 要求每条都在，缺一条就退回相似度。
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [
+            { law: '公司法', articleNo: 11, quote: null },
+            { law: '民法典', articleNo: 61, quote: null },
+        ],
+    }));
+    assert.ok(!isParseError(parsed));
+    const retrieved = [chunk({ source: '公司法.md', articleNo: '第十一条' })];
+    const check = crossCheckAnswerability(parsed, retrieved);
+    assert.equal(check.binding, 'not_in_context');
+    assert.deepEqual(check.matchedIndexes, [0, null]);
+    assert.deepEqual(check.unmatched, [{ law: '民法典', articleNo: 61 }]);
+    const merged = mergeAbstention(SIM_ANSWERED, { kind: 'judged', parsed, check });
+    assert.deepEqual(merged, { ...SIM_ANSWERED, reason: 'judge_binding_mismatch' });
+});
+
+test('crossCheckAnswerability: 多条摘录里有一条对不上 → quoteVerified=false，判定仍不变', () => {
+    const parsed = parseAnswerabilityOutput(JSON.stringify({
+        answerable: true,
+        requirements: [
+            { law: '公司法', articleNo: 11, quote: '法定代表人以公司名义从事的民事活动' },
+            { law: '民法典', articleNo: 61, quote: '这段摘录根本不在条文里' },
+        ],
+    }));
+    assert.ok(!isParseError(parsed));
+    const retrieved = [
+        chunk({ source: '公司法.md', articleNo: '第十一条', document: '法定代表人以公司名义从事的民事活动，其法律后果由公司承受。' }),
+        chunk({ source: '民法典.md', articleNo: '第六十一条', document: '依照法律或者法人章程的规定，代表法人从事民事活动的负责人，为法人的法定代表人。' }),
+    ];
+    const check = crossCheckAnswerability(parsed, retrieved);
+    assert.equal(check.binding, 'in_context');
+    assert.equal(check.quoteVerified, false);
+});
+
 // ---------------------------------------------------------------------------
 // mergeAbstention —— 真值表
 // ---------------------------------------------------------------------------
 function judged(answerable: boolean, retrieved: RetrievedChunk[]): JudgeOutcome {
     const parsed: ParsedAnswerability = {
         answerable,
-        cited: answerable ? { law: '民法典', articleNo: 20 } : null,
-        quote: null,
+        requirements: answerable ? [{ law: '民法典', articleNo: 20, quote: null }] : [],
         reason: 'x',
         missing: null,
     };
