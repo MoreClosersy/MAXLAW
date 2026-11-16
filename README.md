@@ -23,9 +23,9 @@ and the replacement is held to the same standard.
 - **Abstention — implemented, measured, and replaced.** Questions the corpus cannot answer are
   refused by an LLM judge that must **name** the article(s) answering the question; naming nothing
   means refusing. The previous design — a threshold on the top retrieval score — is still in the
-  tree as a pre-filter and a fallback, but it is no longer the mechanism: measured, it refused 3
-  of 42 out-of-domain questions and the signal itself does not separate in-domain from
-  out-of-domain questions. Both are documented with their numbers, including the one that limits
+  tree as a pre-filter and a fallback, but it is no longer the mechanism: on the bge index it
+  refused 3 of 42 out-of-domain questions (13/42 on the current OpenAI index) and the signal
+  itself does not separate in-domain from out-of-domain questions. Both are documented with their numbers, including the one that limits
   the new result — see §Abstention.
 - **Citation verification.** Every 第X条 the model cites is looked up in the store
   *numerically* — 「第577条」and「第五百七十七条」are the same article — and classified
@@ -99,25 +99,28 @@ two bad answer keys on the first run, and a silently wrong answer key reports a 
 | Category | n | hit@1 | hit@3 | hit@5 | coverage@5 | MRR | abstained |
 |---|---|---|---|---|---|---|---|
 | `article_lookup` | 4 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| `semantic` | 21 | 0.714 | 0.905 | 1.000 | 0.952 | 0.823 | 0.000 |
+| `semantic` | 21 | 0.905 | 1.000 | 1.000 | 1.000 | 0.952 | 0.000 |
 | `near_duplicate` | 2 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| `out_of_domain` | 42 | — | — | — | — | — | **0.071** |
-| **overall (27 with ground truth)** | **27** | **0.778** | **0.926** | **1.000** | **0.963** | **0.862** | 0.000 |
+| `out_of_domain` | 42 | — | — | — | — | — | **0.310** |
+| **overall (27 with ground truth)** | **27** | **0.926** | **1.000** | **1.000** | **1.000** | **0.963** | 0.000 |
 
-`hit@K` counts a question as retrieved when **any one** expected article lands in the top K.
-By that definition hit@5 is **1.000** — but coverage@5, which requires **every** expected
-article, is **0.963**: `sem-14` expects 民法典#145 *and* #19, and #19 never comes back
-(rank 0). The two numbers are reported together because a question that retrieves half its
-answer is invisible to hit@K, and that is exactly the shape of a multi-law miss. Apart from
-that one case the remaining gap is *ranking*: 6 of 27 questions have the right article
-somewhere in the top 5 but not at rank 1. That is a different problem with a different fix
-(a reranker), and it is the reason the next step was not "better embeddings" — see
-§Reranking for what happened when one was added.
+`hit@K` counts a question as retrieved when **any one** expected article lands in the top K;
+coverage@K requires **every** expected article. Both are **1.000** here — on this index even
+`sem-14`'s second article (#19) comes back, which the previous bge index missed. The remaining
+gap is *ranking*: 2 of 27 questions have the right article in the top 5 but not at rank 1
+(hit@1 0.926), and MRR is 0.963. That is a different problem with a different fix (a
+reranker) — see §Reranking for what happened when one was added to the old index.
 
 Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `ddfa161d6775` ·
-topK 5 · `EMBEDDING_MODEL=BAAI/bge-base-zh-v1.5` (768-dim). The embedding model belongs in
+topK 5 · `EMBEDDING_MODEL=text-embedding-3-large` (3072-dim). The embedding model belongs in
 that list: swapping it changes every score while the corpus fingerprint stays byte-identical,
 so a report that omits it makes two incomparable numbers look like the same measurement.
+
+> **Measurement provenance (2026-11-17).** The table above is the `text-embedding-3-large`
+> index. §Abstention, §Faithfulness, §Reranking and the citation calibrations below were
+> measured on the previous `bge-base-zh-v1.5` index and have **not** been re-run after the
+> switch; retrieval context changed, so those numbers are not comparable to this table. The
+> judge prompts and the citation checks themselves did not change.
 
 ### The embedding model was chosen by measurement, not by preference
 
@@ -143,8 +146,18 @@ Both rows were re-measured on the current chunking (chapter paths in the embedde
 change, and comparing a pre-change row against a post-change row would have been exactly the
 mistake this section warns about — two numbers that look like one measurement.
 
-Re-running the whole index against the new model takes **2 seconds** once the embedding cache
-is warm, and about five minutes cold — see the batching note below.
+**2026-11-17: the default moved to `text-embedding-3-large` (3072-dim).** Same corpus,
+dataset, code and chunking — only the model changed: hit@1 **0.926** (was 0.778), hit@3
+**1.000**, hit@5 **1.000**, coverage@5 **1.000** (was 0.963: `sem-14`'s #19 now comes back),
+MRR **0.963** (was 0.862). `text-embedding-3-small` was measured first and is **worse than
+bge** (hit@1 0.778 / hit@5 0.926 / MRR 0.836), so the choice between the two OpenAI models was
+also made by measurement, not by price. The switch itself was forced: the HuggingFace
+inference key started returning 402, so bge could not embed new questions any more. Retrieval
+metrics are **not comparable across embedding models** — the bge table above is the record of
+the previous index, not a baseline for this one.
+
+Re-running the whole index takes seconds once the embedding cache is warm, and about a minute
+cold on the OpenAI endpoint (106 batched requests) — see the batching note below.
 
 The first run of this same dataset scored hit@1 **0.370**, hit@5 0.667, MRR 0.506 (measured
 with the old embedding model; the model swap came later and is accounted for separately
@@ -380,10 +393,12 @@ prompt v2, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775`:
 | — `legal_adjacent` (n=38) | 38/38 | |
 | — `unrelated` (n=4) | 4/4 — n too small to conclude anything | |
 
-The two policies produce identical numbers, and that is itself the measurement: the threshold
-abstains on **3** of the 42 out-of-domain questions and **none** of the 27 in-domain ones, so
-`policy=sim` — the shipped rule that lets a similarity abstention override the judge — costs
-nothing here. **39 of the 42 are caught by the judge alone.**
+The two policies produce identical numbers, and that is itself the measurement: on this (bge)
+index the threshold abstained on **3** of the 42 out-of-domain questions and **none** of the 27
+in-domain ones, so `policy=sim` — the shipped rule that lets a similarity abstention override
+the judge — cost nothing here. **39 of the 42 were caught by the judge alone.** On the current
+OpenAI index the same threshold refuses 13/42 (0.310, retrieval table); these judge-gated rows
+have not been re-run since the switch.
 
 | | |
 |---|---|
@@ -512,7 +527,7 @@ which is exactly what makes them fit to fail a build. Generation metrics are not
 `pnpm eval:gate` runs the eval with today's scores as floors:
 
 ```bash
-tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.963 --min-mrr=0.862 \
+tsx eval/run.ts --min-hit=1.0 --min-hit-all=1.0 --min-mrr=0.963 \
   --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0
 ```
 
@@ -609,9 +624,10 @@ Create `.env` in the project root:
 OPENAI_API_KEY=sk-...
 OPENAI_BASE_URL=https://api.openai.com/v1
 
-# Embedding model
-EMBEDDING_API_KEY=hf_...
-EMBEDDING_BASE_URL=https://router.huggingface.co/hf-inference
+# Embedding model (OpenAI-compatible; the key prefix selects the provider)
+EMBEDDING_API_KEY=sk-...
+EMBEDDING_BASE_URL=https://api.openai.com/v1
+EMBEDDING_MODEL=text-embedding-3-large
 ```
 
 | Variable | Default | Notes |
@@ -628,7 +644,7 @@ EMBEDDING_BASE_URL=https://router.huggingface.co/hf-inference
 | `EMBEDDING_TIMEOUT_MS` | `30000` | Per-request timeout. Without it, a stalled `fetch` hangs for undici's 300 s default. |
 | `EMBEDDING_MAX_ATTEMPTS` | `3` | Attempts for transient network failures (ECONNRESET and friends) only. |
 | `EMBED_BATCH_SIZE` | `16` | Texts per embedding request. Set to `1` for the old request-per-chunk behaviour. |
-| `EMBEDDING_MODEL` | `BAAI/bge-base-zh-v1.5` | See §Evaluation for why this one. |
+| `EMBEDDING_MODEL` | `text-embedding-3-large` | See §Evaluation for the measurements behind this one. |
 | `REDIS_URL` | unset | Session storage. Unset → in-process memory store. |
 | `RERANK_ENABLED` | unset | `1` turns on the cross-encoder reranker. Off by default: the first run downloads a 266 MB model. |
 | `RERANK_MODEL` | `Xenova/bge-reranker-base` | Any ONNX cross-encoder in the transformers.js catalogue. |

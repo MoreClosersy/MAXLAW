@@ -20,17 +20,18 @@ import {
 // 可被环境变量覆盖：换 embedding 模型是检索质量最大的一根杠杆，而它此前写死在源码里，
 // 意味着"试一个模型"必须先改代码。注意换模型会改变**每一条**分数（语料指纹不变），
 // 所以 eval 报告必须记录模型名——否则两次不同模型的评测会挂着同样的标签。
-// 默认用中文特化模型。这不是偏好，是量出来的：同一份语料指纹、同一个数据集、同一份切分代码，
-// **只换 embedding 模型**（miniLM 384 维 → bge-base-zh 768 维），整体 hit@1/hit@5/MRR
-// 从 0.593/0.741/0.649 升到 0.778/1.000/0.862，semantic 的 hit@5 从 0.667 升到 1.000
-// （7 条词汇鸿沟型失败清零）。语料指纹与数据集 SHA1 两趟完全一致，所以差异只可能来自模型。
-// 之前那批"词汇鸿沟"型失败（口语化提问与法条措辞无共同词）是通用多语模型撑不住的。
-// 出处：README 的 "The embedding model was chosen by measurement" 一节 + eval/report.json。
 //
-// 注意别把两次改动串成一次（这里此前就写错成 ".741 -> .963"）：0.963 是 bge 在**章节前缀
-// 进入嵌入文本之前**的 hit@5，属于另一次改动；只换模型的终点是 1.000。
+// 默认模型换过两次，每次都是量出来的（同一份语料指纹、同一个数据集、同一份切分代码）：
+//   1. miniLM(384) → bge-base-zh(768)：hit@1/hit@5/MRR 0.593/0.741/0.649 →
+//      0.778/1.000/0.862，semantic 的 hit@5 从 0.667 升到 1.000。
+//   2. bge → text-embedding-3-large(3072)（2026-11-17）：0.778/1.000/0.862 →
+//      0.926/1.000/0.963，coverage@5 从 0.963 升到 1.000。
+//      同一次还量了 text-embedding-3-small：它比 bge 更差（hit@5 0.926 / MRR 0.836），
+//      所以选 large 不是"随便换个 OpenAI 模型"。
+//   第二次切换的触发原因不是偏好：HF inference key 返回 402，新问题已经嵌不了。
+// 出处：README 的 "The embedding model was chosen by measurement" 一节 + eval/report.json。
 export const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL
-    ?? "BAAI/bge-base-zh-v1.5";
+    ?? "text-embedding-3-large";
 export const CHAT_MODEL = process.env.CHAT_MODEL || "gpt-4o-mini";
 
 /** 检索最高分低于此阈值，视为"没检索到相关条文"，走拒答分支而不是让模型编 */

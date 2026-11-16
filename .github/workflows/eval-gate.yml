@@ -32,7 +32,9 @@ on:
   workflow_dispatch:
 
 env:
-  EMBEDDING_MODEL: BAAI/bge-base-zh-v1.5
+  EMBEDDING_MODEL: text-embedding-3-large
+  # 冷缓存现场建索引时用；OpenAI 兼容端点（代码按 key 前缀选择 provider）
+  EMBEDDING_BASE_URL: https://api.openai.com/v1
   # 分块逻辑 / embedText 变更时 +1，并同步上传新的预构建索引。
   INDEX_VERSION: 1
 

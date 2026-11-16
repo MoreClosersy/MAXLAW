@@ -18,7 +18,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 INDEX_VERSION="${INDEX_VERSION:-1}"
-EMBEDDING_MODEL="${EMBEDDING_MODEL:-BAAI/bge-base-zh-v1.5}"
+EMBEDDING_MODEL="${EMBEDDING_MODEL:-text-embedding-3-large}"
 MODEL_SLUG="${EMBEDDING_MODEL//\//_}"
 SRC="cache/${MODEL_SLUG}_cache.json"
 HASH=$(node -e 'console.log(require("./knowledge/CORPUS.json").corpusHash)')
