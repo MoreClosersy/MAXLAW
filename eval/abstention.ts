@@ -238,6 +238,13 @@ const dom = rows.filter(r => r.kind === 'in_domain');
 const ood = rows.filter(r => r.kind !== 'in_domain');
 const stratify = (rs: Row[], k: Kind) => rs.filter(r => r.kind === k);
 
+/** 法名归一：expected.source 是文件名（民法典.md），判官写的是「民法典」，两边都归一再比。 */
+const normLawName = (s: string) => s
+    .replace(/中华人民共和国/g, '')
+    .replace(/[《》\s]/g, '')
+    .replace(/\.md$/i, '')
+    .trim();
+
 /** 显示宽度：中文按 2 列算，否则表格会歪 */
 function padDisp(s: string, w: number): string {
     let width = 0;
@@ -434,13 +441,6 @@ if (failed.length > 0) {
 // sem-01 的承运人责任那条可能才是更好的答案），所以只作诊断打印、不计分。
 // ---------------------------------------------------------------------------
 console.log(`\n=== 判官指名的条号 vs ground truth（仅诊断，不计分）===`);
-// 法名归一：expected.source 是文件名（民法典.md），判官写的是「民法典」，两边都归一再比。
-const normLawName = (s: string) => s
-    .replace(/中华人民共和国/g, '')
-    .replace(/[《》\s]/g, '')
-    .replace(/\.md$/i, '')
-    .trim();
-
 const answered = rows.filter(r =>
     r.expected.length > 0 && r.judge.outcome === 'judged' && r.judge.answerable && r.judge.requirements.length > 0);
 let namedTotal = 0, namedHit = 0, multiRequirementQuestions = 0, fullyCovered = 0;

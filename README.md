@@ -349,7 +349,7 @@ accepts. Building a hand-labelled precision set is the remaining piece of this m
 Everything above concludes that abstention cannot be a threshold on a similarity score. The
 replacement is one LLM call after retrieval, and it must **name** the article(s) that answer the
 question: a verdict the code cannot audit is not a verdict. 69 questions, judge `gpt-4o`, judge
-prompt v1, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775`:
+prompt v2, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775`:
 
 | | judge-gated | similarity threshold alone |
 |---|---|---|
@@ -367,16 +367,18 @@ nothing here. **39 of the 42 are caught by the judge alone.**
 |---|---|
 | judge calls | 65 judged; 4 skipped by the deterministic rules (article lookups) |
 | unusable verdicts | **0** — no parse failures, no API errors, no binding mismatches |
-| the named article was in the retrieved set | 23/23 |
-| its quoted text was found in that article | 23/23 |
-| the named article matches the answer key | 22/23 |
-| cost per run | ~153k prompt + 5.3k completion tokens |
-| latency added before the first generated token | p50 **4.5 s**, p95 5.3 s (62 uncached calls) |
+| every named requirement was in the retrieved set | **26/26** entries, 0 binding mismatches |
+| the quoted text was found in the cited article | 23/23 answerable verdicts, all quotes found |
+| all named requirements match the answer key | **21/23** questions; 23/26 entries |
+| answerable questions that returned two requirements | **3** — `sem-01`, `sem-04`, `sem-20` |
+| cost per run | ~188k prompt + 5.5k completion tokens |
+| latency added before the first generated token | **not measured for v2**; v1 measured p50 **4.5 s** |
 
-The 23/23 on both the binding and the quotation is what separates this from pattern-matching. A
-judge that had learned "the question mentions 刑法, refuse" would still have to read the article to
-produce in-context, quote-verified names for the 23 in-domain verdicts — and the prompt never
-shows it a score, so there is nothing else for it to key on.
+All 26/26 requirement entries were found in the retrieved set, and every one of the 23 answerable
+verdicts had its quotes found verbatim. That is what separates this from pattern-matching: a judge
+that had learned "the question mentions 刑法, refuse" would still have to read the articles to
+produce in-context, quote-verified names across 26 entries — and the prompt never shows it a
+score, so there is nothing else for it to key on.
 
 The two questions the mechanism was designed around, in the judge's own words:
 
@@ -388,17 +390,30 @@ The two questions the mechanism was designed around, in the judge's own words:
   民法典第181条 and the highest-scoring out-of-domain question of all 42. **Refused.** *"检索到的
   最接近条文是民法典第181条，但它分配的是民事责任；问题问的是刑事责任。"*
 
-**The 22/23 is a precision proxy this metric did not have.** §Faithfulness closes by saying a
+**The precision proxy now counts requirements, not questions.** §Faithfulness closes by saying a
 hand-labelled precision set is the missing foundation for any judge score. Forced naming supplies
-a free one — the judge must name an article, and every in-domain question has a known one. The
-single disagreement is `sem-01`, the question §Limitations already documents as arguably mis-keyed:
-the judge named 第832条 (carrier liability), which that note calls "arguably the better reading".
-One disagreement, and it is with the weakest entry in the answer key.
+a free one — every in-domain question has a known answer, so each named requirement either matches
+it or does not. v2 changes the denominator: **23 of 26 requirement entries match the key, and 21 of
+23 questions have every requirement matching** (v1's 22/23 counted one article per question; the
+two statistics are not comparable). The three misses are worth reading rather than counting:
+
+- `sem-01` names 第832条 (carrier liability) *and* 第606条 (risk passes to the buyer for goods sold
+  in transit) against the key's 第604条. Both are defensible readings of "burned in transit" —
+  §Limitations already calls 第832条 arguably the better one — so this is the answer key being
+  narrow rather than the judge being wrong.
+- `sem-04` ("协议离婚…要等多久才能拿到离婚证？") names 第1077条 (the 30-day cooling-off period, the
+  key) **and** 第1078条 (the registration office issues the certificate). 第1078条 states no
+  duration; this one is genuine over-listing.
+
+That last case is the cost of the conjunction: an over-listed requirement that is *not* retrieved
+would turn an answerable question into a `binding_mismatch` fallback. It did not happen in this run
+(0/27 false refusals), but the direction is real, and it is what to watch if the judge gets more
+liberal about what counts as necessary.
 
 **The score gate we planned to add is dominated, and it points the wrong way.** The plan was to
 sweep a threshold on the named article's *retrieval* score, so that the curve would come from a
 measured quantity rather than the judge's self-reported confidence. Measured, it cannot help: of
-the 23 accepted verdicts the named article scores 0.561–0.863, and **zero** out-of-domain questions
+the 23 accepted verdicts the weakest named article scores 0.561–0.863, and **zero** out-of-domain questions
 were accepted at all — so raising the gate can only turn correct in-domain answers into refusals.
 Every row of the sweep is worse than no gate. The failure it would insure against (a judge
 accepting a low-scoring article) did not occur once, and the one sample known to fool a similarity
@@ -413,16 +428,18 @@ not low ones. The gate is not shipped.
    never told about. The honest experiment is out-of-domain questions from laws the prompt does not
    name.
 2. **One prompt, one judge, temperature 0, one run.** There is no variance estimate. The only
-   stability handle is a different model, below.
+   stability handle is a different model; that run was done on v1 (below) and not repeated for v2.
 3. **The fallback was exercised zero times.** 65/65 calls returned a usable verdict — the good
    outcome — but it means the network-failure and parse-failure branches are covered by unit tests
    only and have never fired on real data. A safety net that has never caught anything is untested
    in the way that matters.
 4. **`unrelated` is n=4.** Its 4/4 is noise; the result rests on the 38 `legal_adjacent` questions.
-5. **Latency is a product cost, not a footnote.** 4.5 s median is added to every question that
-   reaches stage 2, and stage 1 skips only 4 of 69.
+5. **Latency is a product cost, not a footnote.** v1 measured 4.5 s median added to every question
+   that reaches stage 2, and stage 1 skips only 4 of 69. v2's prompt is longer, so the number is
+   probably higher — and it is **unmeasured**, which is not the same as unchanged.
 
-**The judge's identity is worth one question out of 42.** `--judge-model-b=gpt-4o-mini`: 65
+**The judge's identity is worth one question out of 42 — measured on v1, not repeated for v2.**
+`--judge-model-b=gpt-4o-mini`: 65
 comparable verdicts, **1 disagreement (0.015)**, and it is an over-acceptance rather than a false
 refusal — `ood-28` ("网购商品七天无理由退货的起算时间怎么算？", a 消费者权益保护法 question) is
 refused by `gpt-4o` and accepted by `gpt-4o-mini`. Out-of-domain refusal goes 42/42 → 41/42;
@@ -438,17 +455,19 @@ than a 0 ms it did not observe. The judge cache lives in `cache/answerability-ju
 `sha1(model, promptVersion, question, context)`, so bumping the prompt version invalidates every
 entry and re-prices the run.
 
-**v2 (multi-requirement) is implemented and has not been measured.** The judge now returns
-`requirements: [{law, articleNo, quote}]` instead of a single `cited`, and
-`crossCheckAnswerability` requires *all* of them to be in the retrieved set — so a multi-law
-question that comes back half-retrieved is no longer accepted as answerable, it falls back to
-the similarity verdict. Old v1 JSON still parses (as a single requirement), so existing reports
-replay. **Every number in this section is v1**: 42/42, 0/27, 22/23, the 4.5 s latency, the
-`--judge-model-b` flip rate. Bumping the prompt version invalidates `cache/answerability-judge.json`
-by design, and `pnpm eval:abstention` needs network and about $0.5 to produce v2 numbers. Until
-that run exists, v2 is an unmeasured change — shipped behind a schema that is unit-tested
-(`src/tests/abstention.test.ts`), not behind a number. Saying so is the point; the alternative
-was to leave v1's 22/23 on the page as if it still described the shipped prompt.
+**v2 (multi-requirement) is measured, and the numbers above are its numbers.** The judge returns
+`requirements: [{law, articleNo, quote}]` and `crossCheckAnswerability` requires all of them, so a
+multi-law answer that retrieved only half its material can no longer pass as answerable. The
+headline did not move — 42/42 out of domain, 0/27 false refusals, 0 unusable verdicts out of 65
+calls — and **3 of the 23 answerable questions returned two requirements**, including `sem-20`'s
+公司法#11 + 民法典#61, the cross-law case the schema exists for. Old v1 JSON still parses as a
+single requirement, so older reports replay.
+
+Two things are still v1 and are labelled as such above: the `--judge-model-b` stability run (not
+repeated) and the latency sample. The v2 cold run lost its timings to a report-formatting crash
+*after* every judge call had returned — the cache survived, so the rerun was free but by definition
+produced no latency samples. The v2 prompt is ~35% longer (3,589 vs 2,655 characters) and the cold
+run spent **188k prompt + 5.5k completion tokens**.
 
 ### Gating a build on it
 
@@ -869,7 +888,7 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   in-domain falsely refused, zero unusable verdicts out of 65 calls — but the judge prompt
   enumerates the laws the out-of-domain questions come from, so this measures that it applies the
   coverage rule it was given, not that it generalises to laws nobody listed. It is also a single
-  prompt and a single judge at temperature 0 with no variance estimate, it adds **4.5 s** of median
+  prompt and a single judge at temperature 0 with no variance estimate, it added **4.5 s** of median
   latency to every question that reaches it, and its fallback path has never fired on real data.
   The previous version of this bullet said abstention never fired at all; that was true of the
   similarity threshold, which is now only a pre-filter and a fallback. See §Abstention.
