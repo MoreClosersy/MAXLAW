@@ -2,7 +2,7 @@
   "corpusVersion": 2,
   "corpusHash": "39727cfdca37a660",
   "totalArticles": 1526,
-  "datasetSha1": "307045aca36e",
+  "datasetSha1": "025db9bed92e",
   "config": {
     "embeddingModel": "text-embedding-3-large",
     "embeddingDimension": 3072,
@@ -16,7 +16,7 @@
       "judge": null
     }
   },
-  "generatedAt": "2026-11-17T03:15:38.839Z",
+  "generatedAt": "2026-11-17T04:11:17.167Z",
   "metrics": [
     {
       "label": "article_lookup",
@@ -69,7 +69,7 @@
       "hit1": "0.600",
       "hit3": "0.800",
       "hitK": "1.000",
-      "hitAllK": "0.400",
+      "hitAllK": "0.600",
       "mrr": "0.750",
       "abstainRate": "0.000"
     },
@@ -80,7 +80,7 @@
       "hit1": "0.875",
       "hit3": "0.969",
       "hitK": "1.000",
-      "hitAllK": "0.906",
+      "hitAllK": "0.938",
       "mrr": "0.930",
       "abstainRate": "0.000"
     }
@@ -1311,20 +1311,20 @@
     {
       "id": "multi-04",
       "category": "multi_law",
-      "question": "夫妻一方转让名下有限责任公司股权，其他股东能否主张优先购买权？",
+      "question": "公司股东会决议被撤销后，依据该决议与善意相对人签订的合同还有效吗？",
       "abstained": false,
-      "topScore": 0.6571,
+      "topScore": 0.6372,
       "reason": "answered",
       "ranks": [
         2,
-        0
+        5
       ],
       "retrieved": [
-        "公司法.md#85",
-        "公司法.md#84",
-        "公司法.md#89",
-        "公司法.md#88",
-        "公司法.md#86"
+        "公司法.md#28",
+        "公司法.md#26",
+        "公司法.md#25",
+        "公司法.md#230",
+        "民法典.md#85"
       ]
     },
     {

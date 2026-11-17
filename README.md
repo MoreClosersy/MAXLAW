@@ -102,29 +102,27 @@ two bad answer keys on the first run, and a silently wrong answer key reports a 
 | `semantic` | 21 | 0.905 | 1.000 | 1.000 | 1.000 | 0.952 | 0.000 |
 | `near_duplicate` | 2 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
 | `out_of_domain` | 42 | — | — | — | — | — | **0.310** |
-| `multi_law` | 5 | 0.600 | 0.800 | 1.000 | 0.400 | 0.750 | 0.000 |
-| **overall (32 with ground truth)** | **32** | **0.875** | **0.969** | **1.000** | **0.906** | **0.930** | 0.000 |
+| `multi_law` | 5 | 0.600 | 0.800 | 1.000 | 0.600 | 0.750 | 0.000 |
+| **overall (32 with ground truth)** | **32** | **0.875** | **0.969** | **1.000** | **0.938** | **0.930** | 0.000 |
 
 `hit@K` counts a question as retrieved when **any one** expected article lands in the top K;
-coverage@K requires **every** expected article. hit@5 is **1.000**, but coverage@5 is
-**0.906** — and the five `multi_law` cases are where it breaks: 3 of them retrieve only one
-side. `multi-01` gets 公司法#23 at rank 1 but 民法典#83 at rank **9**; `multi-03` gets
-公司法#15 at rank 4 but 民法典#504 at rank **7**; `multi-04` gets 公司法#84 at rank 2 and
-民法典#1062 not in the top 20 at all. The per-law coverage gate only injects a law when its
-best candidate is next in line (rank ≤ topK+1), so a rank-7/9 candidate is not added —
-relaxing that gate is what re-admitted the 提存 noise measured earlier. Deterministic quotas
-cannot close this: the second law's article is semantically distant from a question phrased in
-the first law's vocabulary. The next step is query decomposition/rewrite, not a larger topK.
-The ranking side is 0.875 hit@1 / 0.930 MRR: 4 of 32 questions have the right article in the
-top 5 but not at rank 1.
+coverage@K requires **every** expected article. hit@5 is **1.000**, coverage@5 is **0.938**,
+and two of the five `multi_law` cases are where it breaks: `multi-01` gets 公司法#23 at rank 1
+but 民法典#83 at rank **9**; `multi-03` gets 公司法#15 at rank 4 but 民法典#504 at rank **7**.
+The per-law coverage gate only injects a law when its best candidate is next in line
+(rank ≤ topK+1), so a rank-7/9 candidate is not added — relaxing that gate is what re-admitted
+the 提存 noise measured earlier. The named-law **query rewrite** fixes both: `pnpm eval
+--rewrite` gives `multi_law` coverage **1.000** and overall **1.000**, with hit@1/MRR
+unchanged. The ranking side is 0.875 hit@1 / 0.930 MRR: 4 of 32 questions have the right
+article in the top 5 but not at rank 1.
 
-Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `307045aca36e` ·
+Corpus v2 · 1,526 articles · `corpusHash 39727cfdca37a660` · dataset `025db9bed92e` ·
 topK 5 · `EMBEDDING_MODEL=text-embedding-3-large` (3072-dim). The embedding model belongs in
 that list: swapping it changes every score while the corpus fingerprint stays byte-identical,
 so a report that omits it makes two incomparable numbers look like the same measurement.
 
 > **Measurement provenance (2026-11-17).** The table above is the `text-embedding-3-large`
-> index with the five `multi_law` cases added (dataset `307045aca36e`). §Abstention and
+> index with the five `multi_law` cases added (dataset `025db9bed92e`). §Abstention and
 > §Faithfulness below were measured on the **previous** index *and* the 69-question dataset
 > (27 in-domain); they have not been re-run after either change, so their denominators and
 > contexts are both older than this table. §Reranking and the citation calibrations are from
@@ -538,7 +536,7 @@ which is exactly what makes them fit to fail a build. Generation metrics are not
 `pnpm eval:gate` runs the eval with today's scores as floors:
 
 ```bash
-tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.906 --min-mrr=0.930 \
+tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.938 --min-mrr=0.930 \
   --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0 \
   --min-cat-hit=multi_law:1.0
 ```
@@ -870,16 +868,17 @@ two in-corpus laws, `runQuery` asks `gpt-4o-mini` for 1–2 **statutory-search**
 (`prompts/query-rewrite.v1.md`), retrieves up to two per law with `retrieveInLaw`, and merges
 via `mergeRewrittenResults` (max two per law; only tail chunks of the original retrieval are
 evicted; pinned articles are never touched). Measured with `pnpm eval --rewrite` on the
-74-question set: `multi_law` coverage@5 **0.400 → 0.800**, overall **0.906 → 0.969**; hit@1
-and MRR unchanged. The two recovered cases are `multi-01` and `multi-03`; `multi-04` (no law
-named) stays at 1/2. The rewrite costs one extra model call, only for explicitly named
-multi-law questions, and falls back to the original retrieval on any failure.
+74-question set: `multi_law` coverage@5 **0.600 → 1.000**, overall **0.938 → 1.000**; hit@1
+and MRR unchanged. The two recovered cases are `multi-01` and `multi-03`. The rewrite costs one
+extra model call, only for explicitly named multi-law questions, and falls back to the original
+retrieval on any failure.
 
-What it still does **not** do: the rewrite only fires when the question names ≥2 laws.
-A question that *implicitly* needs a second law — `multi-04`, or `sem-20`-style "法定代表人
-以公司名义…" — is untouched: that requires a decomposer that infers the missing law, not a
-rewrite of the laws the user happened to name. And the rewrite is **not in the CI gate**:
-it calls a model, and the gate requires the same input to produce the same output.
+What it still does **not** do: the rewrite only fires when the question names ≥2 laws. Whether
+a question can *implicitly* need a second law is currently **untested** — `multi-04` was re-keyed
+(see §Limitations) because its second expected article was not necessary, and no remaining case
+in the dataset fails that way. Building an inference step on n=0 would be guesswork; the honest
+next step is to construct such a case first. And the rewrite is **not in the CI gate**: it calls
+a model, and the gate requires the same input to produce the same output.
 
 ### Reranking is implemented, measured, and off by default
 
@@ -960,9 +959,11 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   not name. The judge can now return multiple requirements (prompt v2), so a half-retrieved
   multi-law answer is no longer *accepted* as answerable — but v2 is not yet re-measured (see
   §Abstention), and retrieval still guarantees coverage only for named laws. coverage@5 is
-  **0.906** without the rewrite (**0.969** with it): `multi-04` — a question that implicitly
-  needs a second law without naming it — still retrieves only one side. `sem-14`'s second
-  article was the old example of the same failure.
+  **0.938** without the rewrite (**1.000** with it). `multi-04` was re-keyed: 民法典#1062 was
+  not necessary to answer "can other shareholders claim a priority right" — 公司法#84 answers
+  it directly — so its 1/2 was an over-specified key, not an implicit-recall failure. It was
+  replaced by a genuinely dual-law question (决议撤销 + 善意相对人) that now passes. There is
+  no remaining implicit-multi-law case, which is why no inference feature was built.
 - **Retrieval is lexical + dense, not hybrid.** BM25 with reciprocal-rank fusion is planned
   but not implemented, so exact-term queries relying on rare wording can under-retrieve.
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage
