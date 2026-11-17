@@ -18,7 +18,8 @@
 #      同一个缓存文件里，加一道题而键不变，就会命中一份缺该题查询向量的缓存；
 #      **分块逻辑或 embedText 变更时手动把 INDEX_VERSION +1**。
 #   3. 冷缓存**不需要密钥**也能跑：从 release `index-cache` 下载预构建索引
-#      （`index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`，用 tools/pack_index.sh 生成）。
+#      （`index-v<INDEX_VERSION>-<model>-<corpusHash>-<datasetHash>.json.gz`，用 tools/pack_index.sh 生成）。
+#      资产名里带数据集哈希：加一道题就换一个名字，旧资产自然失效，不会被静默复用。
 #      只有该资产不存在时才退回 EMBEDDING_API_KEY 现场建索引；
 #      两者都没有则明确失败——没有可信索引就没有可测量的指标，不静默跳过。
 #   4. 缓存必须在 eval **之后**保存：eval 会把 69 条查询向量写进同一个文件。
@@ -66,12 +67,17 @@ jobs:
         id: corpus
         run: echo "hash=$(node -e 'console.log(require("./knowledge/CORPUS.json").corpusHash)')" >> "$GITHUB_OUTPUT"
 
+      - name: 读取数据集指纹
+        id: dataset
+        run: |
+          echo "hash=$(node -e 'const c=require("crypto");const fs=require("fs");console.log(c.createHash("sha1").update(fs.readFileSync("eval/dataset.jsonl")).digest("hex").slice(0,12))')" >> "$GITHUB_OUTPUT"
+
       - name: 恢复嵌入索引缓存
         id: cache
         uses: actions/cache/restore@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ hashFiles('eval/dataset.jsonl') }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ steps.dataset.outputs.hash }}
 
       # 冷缓存的第一条路：release 里的预构建索引。公开仓库的 release 资产
       # 不需要 token，fork PR 也能下载——这正是不把密钥当唯一路径的理由。
@@ -80,9 +86,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           CORPUS_HASH: ${{ steps.corpus.outputs.hash }}
+          DATASET_HASH: ${{ steps.dataset.outputs.hash }}
         run: |
           MODEL_SLUG="${EMBEDDING_MODEL//\//_}"
-          ASSET="index-v${INDEX_VERSION}-${MODEL_SLUG}-${CORPUS_HASH}.json.gz"
+          ASSET="index-v${INDEX_VERSION}-${MODEL_SLUG}-${CORPUS_HASH}-${DATASET_HASH}.json.gz"
           URL="https://github.com/${{ github.repository }}/releases/download/index-cache/${ASSET}"
           TARGET="cache/${MODEL_SLUG}_cache.json"
           if curl -fsSL "$URL" -o /tmp/index.json.gz; then
@@ -106,11 +113,12 @@ jobs:
         env:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
           CORPUS_HASH: ${{ steps.corpus.outputs.hash }}
+          DATASET_HASH: ${{ steps.dataset.outputs.hash }}
         run: |
           if [ -z "$EMBEDDING_API_KEY" ]; then
             echo "::error::索引缓存未命中：没有预构建索引，也拿不到 EMBEDDING_API_KEY。"
             echo "修复（二选一）："
-            echo "  1. 把预构建索引上传到 release 'index-cache'，文件名 index-v${INDEX_VERSION}-${EMBEDDING_MODEL//\//_}-${CORPUS_HASH}.json.gz"
+            echo "  1. 把预构建索引上传到 release 'index-cache'，文件名 index-v${INDEX_VERSION}-${EMBEDDING_MODEL//\//_}-${CORPUS_HASH}-${DATASET_HASH}.json.gz"
             echo "     （本地：pnpm embed && pnpm index:pack）"
             echo "  2. 给仓库配置 EMBEDDING_API_KEY secret，首次运行现场建索引并回填缓存"
             echo "没有可信索引就没有可测量的指标——门禁不判定，直接失败（不静默跳过）。"
@@ -134,7 +142,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: cache
-          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ hashFiles('eval/dataset.jsonl') }}
+          key: embed-${{ runner.os }}-${{ env.EMBEDDING_MODEL }}-v${{ env.INDEX_VERSION }}-${{ steps.corpus.outputs.hash }}-${{ steps.dataset.outputs.hash }}
 
       - name: 存档评测报告
         if: always()

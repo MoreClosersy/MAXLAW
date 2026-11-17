@@ -551,28 +551,27 @@ from a **release asset**, with the secret as a fallback:
 
 ```bash
 pnpm embed          # rebuild after a corpus / INDEX_VERSION change
-pnpm eval           # so the 69 query vectors are in the same cache file
-pnpm index:pack     # index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz
-# upload it to a release tagged `index-cache` (overwrite the same asset name)
-# repack after adding a dataset case too: the query vectors live in the same file
+pnpm eval           # so the query vectors are in the same cache file
+pnpm index:pack     # index-v<INDEX_VERSION>-<model>-<corpusHash>-<datasetHash>.json.gz
+# upload it to a release tagged `index-cache`; the dataset hash in the name means
+# a new dataset gets a new filename, so old assets can stay and never shadow it
 ```
 
 On a cache miss the job downloads
-`releases/download/index-cache/index-v<INDEX_VERSION>-<model>-<corpusHash>.json.gz`, checks the
-entry count, then saves the restored cache for the next run. The failure also exposed three bugs
+`releases/download/index-cache/index-v<INDEX_VERSION>-<model>-<corpusHash>-<datasetHash>.json.gz`,
+checks the entry count, then saves the restored cache for the next run. The failure also exposed three bugs
 that are now fixed: the save step used `if: always()` and would have cached a **half-built**
 index after a failed `pnpm embed`; the key ignored the chunker, so a chunking change would have
 re-used an index whose chunk hashes no longer exist; and the eval step was not given the secret,
 so even a successful cold build would have failed on the 69 query embeddings in strict mode.
 `pnpm test` and `pnpm lint:corpus` now run before any embedding work.
 
-> **Status (2026-11-16): both cache paths green, no secrets involved.**
-> Cold run [43871995528](https://github.com/MoreClosersy/MAXLAW/actions/runs/43871995528):
-> empty cache → downloaded the release asset (step 9), skipped the build (step 10), passed the
-> gate (step 11), saved the cache (step 12) — **43 s**.
-> Warm run [43872210014](https://github.com/MoreClosersy/MAXLAW/actions/runs/43872210014):
-> restored the saved cache (step 8); download, build and save all `skipped`, gate passed —
-> **32 s**. Both runs used the public release asset; neither needed an Actions secret.
+> **Status (2026-11-17).** The release-asset path is the primary cold start, and the asset name
+> now carries the dataset hash so a stale asset can never be picked up silently. Run
+> [44015921805](https://github.com/MoreClosersy/MAXLAW/actions/runs/44015921805) was the first to
+> use the `EMBEDDING_API_KEY` fallback: the asset covered the corpus but not a newly added query
+> vector, the secret embedded that one vector, the gate passed and the cache was saved. Warm
+> runs need neither the asset download nor the secret.
 
 
 ## Quick Start

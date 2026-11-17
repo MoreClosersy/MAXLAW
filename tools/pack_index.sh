@@ -22,7 +22,8 @@ EMBEDDING_MODEL="${EMBEDDING_MODEL:-text-embedding-3-large}"
 MODEL_SLUG="${EMBEDDING_MODEL//\//_}"
 SRC="cache/${MODEL_SLUG}_cache.json"
 HASH=$(node -e 'console.log(require("./knowledge/CORPUS.json").corpusHash)')
-OUT="index-v${INDEX_VERSION}-${MODEL_SLUG}-${HASH}.json.gz"
+DATASET_HASH=$(node -e 'const c=require("crypto");const fs=require("fs");console.log(c.createHash("sha1").update(fs.readFileSync("eval/dataset.jsonl")).digest("hex").slice(0,12))')
+OUT="index-v${INDEX_VERSION}-${MODEL_SLUG}-${HASH}-${DATASET_HASH}.json.gz"
 
 if [ ! -s "$SRC" ]; then
     echo "缺少 $SRC。先跑 pnpm embed（需要 EMBEDDING_API_KEY），再打包。" >&2
@@ -32,7 +33,7 @@ fi
 COUNT=$(node -e 'const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); console.log(Object.keys(d).length)' "$SRC")
 gzip -c "$SRC" > "$OUT"
 
-echo "语料指纹 ${HASH} · 索引条目 ${COUNT}"
+echo "语料指纹 ${HASH} · 数据集指纹 ${DATASET_HASH} · 索引条目 ${COUNT}"
 echo "已生成 ${OUT}（$(du -h "$OUT" | cut -f1)）"
 echo
 echo "上传到：https://github.com/<owner>/<repo>/releases/tag/index-cache"
