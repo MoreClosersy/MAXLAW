@@ -10,12 +10,13 @@
     "topK": 5,
     "threshold": 0.35,
     "generate": false,
+    "rewrite": false,
     "abstention": {
       "mode": "similarity-only",
       "judge": null
     }
   },
-  "generatedAt": "2026-11-16T17:12:03.277Z",
+  "generatedAt": "2026-11-17T03:15:38.839Z",
   "metrics": [
     {
       "label": "article_lookup",

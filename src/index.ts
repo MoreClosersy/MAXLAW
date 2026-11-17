@@ -1,6 +1,6 @@
 import MCPClient from "./MCPClient.js";
 import Agent, { AgentEvent } from "./Agent.js";
-import EmbeddingRetriever from "./EmbeddingRetriever.js";
+import EmbeddingRetriever, { parseQuery } from "./EmbeddingRetriever.js";
 import Reranker, { RERANK_ENABLED, RERANK_MODEL, RERANK_CANDIDATES } from "./Reranker.js";
 import { RetrievedChunk } from "./VectorStore.js";
 import { loadPrompt } from "./prompts.js";
@@ -10,6 +10,7 @@ import fs from "fs";
 import { decideAbstention, shouldSkipJudge, mergeAbstention, planSecondaryRetrieval } from "./abstention.js";
 import type { AbstentionDecision, AbstentionReason, JudgeOutcome } from "./abstention.js";
 import { normLawName } from "./laws.js";
+import { QUERY_REWRITE_ENABLED, rewriteForLaws, mergeRewrittenResults } from "./QueryRewriter.js";
 import {
     judgeAnswerability,
     skippedAccounting,
@@ -171,7 +172,7 @@ export async function runQuery(opts: QueryOptions): Promise<QueryResult> {
     const { query, retriever } = opts;
 
     opts.onEvent?.({ type: 'iteration', message: '正在检索法条…' });
-    const retrieved = await retriever.retrieve(query, RETRIEVAL_TOP_K);
+    let retrieved = await retriever.retrieve(query, RETRIEVAL_TOP_K);
 
     // 第一段：相似度。它拦不住该拦的东西（见 decideAbstention 上面那张 AUC 表），
     // 现在只负责两件事——挡掉明显跑题的，以及在判官故障时当回退目标。
@@ -180,6 +181,27 @@ export async function runQuery(opts: QueryOptions): Promise<QueryResult> {
     // 第二段：可答性判官。跳过规则是确定性的（纯函数，有单测），
     // 不花钱的情形不花钱，理由记进账单。
     const skip = shouldSkipJudge(retrieved, sim);
+
+    // 多法问题：按法改写检索式，补充每部法的最佳候选。
+    // 放在相似度判定之后、判官之前——相似度只看原始检索（改写结果的分数不可比），
+    // 而判官应该看到补充后的上下文。
+    if (QUERY_REWRITE_ENABLED && !sim.abstained) {
+        const queryLaws = parseQuery(query).lawNames
+            .filter(l => retriever.getStore().hasSource(l));
+        if (queryLaws.length >= 2) {
+            opts.onEvent?.({
+                type: 'iteration',
+                message: `检测到多法问题，正在按${queryLaws.join('、')}改写检索…`,
+            });
+            const rewrites = await rewriteForLaws(query, queryLaws, { signal: opts.signal });
+            if (rewrites.length > 0) {
+                const extra: RetrievedChunk[] = [];
+                for (const r of rewrites) extra.push(...await retriever.retrieveInLaw(r.query, r.law, 2));
+                retrieved = mergeRewrittenResults(retrieved, extra, queryLaws, RETRIEVAL_TOP_K);
+            }
+        }
+    }
+
     let outcome: JudgeOutcome;
     let judge: JudgeAccounting;
     if (!ANSWERABILITY_JUDGE_ENABLED) {

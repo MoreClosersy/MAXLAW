@@ -21,6 +21,8 @@ import path from 'path';
 import crypto from 'crypto';
 import { splitIntoChunks } from '../src/EmbeddingRetriever.js';
 import { createRetriever, decideAbstention, EMBEDDING_MODEL, RETRIEVAL_TOP_K, RETRIEVAL_SCORE_THRESHOLD, runQuery } from '../src/index.js';
+import { parseQuery } from '../src/EmbeddingRetriever.js';
+import { rewriteForLaws, mergeRewrittenResults } from '../src/QueryRewriter.js';
 import { RERANK_ENABLED, RERANK_MODEL, RERANK_CANDIDATES } from '../src/Reranker.js';
 import { loadKnowledge } from '../src/loadKnowledge.js';
 import { KNOWLEDGE_DIR, EVAL_DIR } from '../src/paths.js';
@@ -55,6 +57,11 @@ const THRESHOLD = num('--threshold', RETRIEVAL_SCORE_THRESHOLD);
 const GENERATE = has('--generate');
 const VERBOSE = has('--verbose') || has('-v');
 const ONLY_CATEGORY = argv.find(a => a.startsWith('--category='))?.split('=')[1];
+/**
+ * 可选的多法查询改写（默认关）。会调用 gpt-4o-mini，**不能进 CI 门禁**：
+ * 门禁要求同输入必然同输出。它只用来量"改写后覆盖率能到多少"。
+ */
+const REWRITE = has('--rewrite');
 /**
  * CI 门禁。四类闸，都只在显式指定时判定（不传就只报数，避免默认行为随指标波动而变）：
  *
@@ -189,7 +196,18 @@ interface Row {
 
 const rows: Row[] = [];
 for (const c of cases) {
-    const retrieved = await retriever.retrieve(c.question, TOP_K);
+    let retrieved = await retriever.retrieve(c.question, TOP_K);
+    if (REWRITE) {
+        const laws = parseQuery(c.question).lawNames.filter(l => retriever.getStore().hasSource(l));
+        if (laws.length >= 2) {
+            const rewrites = await rewriteForLaws(c.question, laws);
+            if (rewrites.length > 0) {
+                const extra = [];
+                for (const r of rewrites) extra.push(...await retriever.retrieveInLaw(r.query, r.law, 2));
+                retrieved = mergeRewrittenResults(retrieved, extra, laws, TOP_K);
+            }
+        }
+    }
     const decision = decideAbstention(retrieved, THRESHOLD);
 
     const keyed = retrieved.map(r => `${r.source}#${parseArticleNo(r.articleNo)}`);
@@ -332,6 +350,7 @@ const report = {
         topK: TOP_K,
         threshold: THRESHOLD,
         generate: GENERATE,
+        rewrite: REWRITE,
         // 这份报告里的 abstained 只反映**第一段**（相似度阈值），不是线上行为。
         // 不写这一行，"这份报告说拒答率 7%"会读成一个关于产品的陈述，而它只是
         // 关于一个已经知道拦不住东西的过滤器的陈述。真正的拒答数字见 abstention-report.json。

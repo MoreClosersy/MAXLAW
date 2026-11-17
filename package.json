@@ -21,7 +21,8 @@
     "eval:faithfulness:calib": "tsx eval/faithfulness.ts --calibrate --stability",
     "eval:gate": "tsx eval/run.ts --min-hit=1.0 --min-hit-all=0.906 --min-mrr=0.930 --min-cat-hit=article_lookup:1.0 --min-cat-hit=near_duplicate:1.0 --min-cat-hit=semantic:1.0 --min-cat-hit=multi_law:1.0",
     "eval:citations": "tsx eval/citations.ts",
-    "eval:secondary": "tsx eval/secondary.ts"
+    "eval:secondary": "tsx eval/secondary.ts",
+    "eval:rewrite": "tsx eval/rewrite.ts"
   },
   "keywords": [],
   "author": "",

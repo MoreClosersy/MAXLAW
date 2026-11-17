@@ -653,6 +653,10 @@ EMBEDDING_MODEL=text-embedding-3-large
 | `CHAT_MODEL` | `gpt-4o-mini` | Chat model id. |
 | `PORT` | `3001` | HTTP port. |
 | `RETRIEVAL_TOP_K` | `5` | Articles retrieved per query. |
+| `QUERY_REWRITE` | on | `0` disables the multi-law query rewrite. Only fires when a question names ≥2 in-corpus laws. |
+| `QUERY_REWRITE_MODEL` | `gpt-4o-mini` | Rewriter model, separate from the chat/judge models so caches do not collide. |
+| `QUERY_REWRITE_TIMEOUT_MS` | `8000` | Per-attempt timeout; failure falls back to the original retrieval. |
+| `QUERY_REWRITE_PROMPT_VERSION` | `1` | Loads `prompts/query-rewrite.v<N>.md`. |
 | `RETRIEVAL_SCORE_THRESHOLD` | `0.35` | Below this (with no exact article-number hit) the query abstains. It is **not** the abstention mechanism — it refuses 3 of 42 out-of-domain questions and no in-domain ones, so it only filters obvious off-topic queries. Its two remaining jobs are (a) a free pre-filter that skips the judge on clear misses, and (b) the fallback when the judge fails. See §Abstention. |
 | `PROMPT_VERSION` | `3` | Loads `prompts/legal-system-prompt.v<N>.md`. |
 | `EMBEDDING_TIMEOUT_MS` | `30000` | Per-request timeout. Without it, a stalled `fetch` hangs for undici's 300 s default. |
@@ -859,14 +863,23 @@ both are deterministic and pinned by `src/tests/multiLawRecall.test.ts`:
   first alternate has nothing relevant to contribute; the honest outcome is "this law has no
   provision on point", not an article chosen by a quota.
 
-What it does **not** do: it only fires when the question names the laws. A question that
-names one law but needs another ("法定代表人以公司名义…" needs 公司法#11 **and** 民法典#61)
-still depends on the bi-encoder retrieving both, and the answerability judge can name only
-one article. It also cannot fix vocabulary mismatch: a question phrased in 公司法 terms will
-not surface the right 民法典 article merely because 民法典 was named — the per-law quota
-only decides *whether* that law is represented, not *which* article represents it. Those two
-cases need per-law query rewriting (decomposition) plus a judge that returns a *list* of
-requirements — see §Limitations.
+**Per-law query rewriting (implemented, measured).** The quota above decides *whether* a law
+is represented, not *which* article represents it — a question phrased in 公司法 terms does
+not surface the right 民法典 article just because 民法典 was named. So when a question names
+two in-corpus laws, `runQuery` asks `gpt-4o-mini` for 1–2 **statutory-search** queries per law
+(`prompts/query-rewrite.v1.md`), retrieves up to two per law with `retrieveInLaw`, and merges
+via `mergeRewrittenResults` (max two per law; only tail chunks of the original retrieval are
+evicted; pinned articles are never touched). Measured with `pnpm eval --rewrite` on the
+74-question set: `multi_law` coverage@5 **0.400 → 0.800**, overall **0.906 → 0.969**; hit@1
+and MRR unchanged. The two recovered cases are `multi-01` and `multi-03`; `multi-04` (no law
+named) stays at 1/2. The rewrite costs one extra model call, only for explicitly named
+multi-law questions, and falls back to the original retrieval on any failure.
+
+What it still does **not** do: the rewrite only fires when the question names ≥2 laws.
+A question that *implicitly* needs a second law — `multi-04`, or `sem-20`-style "法定代表人
+以公司名义…" — is untouched: that requires a decomposer that infers the missing law, not a
+rewrite of the laws the user happened to name. And the rewrite is **not in the CI gate**:
+it calls a model, and the gate requires the same input to produce the same output.
 
 ### Reranking is implemented, measured, and off by default
 
@@ -947,8 +960,9 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   not name. The judge can now return multiple requirements (prompt v2), so a half-retrieved
   multi-law answer is no longer *accepted* as answerable — but v2 is not yet re-measured (see
   §Abstention), and retrieval still guarantees coverage only for named laws. coverage@5 is
-  **0.906**: three of the five `multi_law` cases retrieve only one side, and `sem-14`'s second
-  article is the old example of the same failure.
+  **0.906** without the rewrite (**0.969** with it): `multi-04` — a question that implicitly
+  needs a second law without naming it — still retrieves only one side. `sem-14`'s second
+  article was the old example of the same failure.
 - **Retrieval is lexical + dense, not hybrid.** BM25 with reciprocal-rank fusion is planned
   but not implemented, so exact-term queries relying on rare wording can under-retrieve.
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage
@@ -999,10 +1013,12 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
 | `pnpm test` | Unit tests (`node:test`, no new dependencies). |
 | `pnpm eval` | Run the retrieval eval and write `eval/report.json`. |
 | `pnpm eval:gate` | Same eval with metric floors; exits non-zero if one drops. This is what CI runs — see §Evaluation. |
+| `pnpm eval --rewrite` | Same eval with the multi-law query rewrite on. **Costs money** (only multi-law questions call the model). Not part of CI. |
 | `pnpm eval:rerank` | Same eval with the cross-encoder reranker on — see §Reranking. |
 | `pnpm eval:signals` | Measure the similarity signals behind the abstention table. **Free, offline, deterministic** — never calls a model. |
 | `pnpm eval:abstention` | Measure the answerability judge: both error rates, stratified by `oodKind`, plus the `sim`-vs-`judge` policy counterfactual. **Costs money** — see §Abstention. |
 | `pnpm eval:citations` | Calibrate the citation content-binding check on cached answers plus injected swaps. Free/offline, but needs the gitignored answer cache. |
+| `pnpm eval:rewrite` | Before/after coverage on the `multi_law` category, with the query rewrite on. **Costs money** (one call per named multi-law question). |
 | `pnpm eval:secondary` | Constructed end-to-end check of the judge-driven second pass (sem-20 with 民法典 removed). **Costs money** — two judge calls. |
 | `pnpm eval:faithfulness` | LLM-judge faithfulness: are the answer's claims supported by what was retrieved? **Costs money** — see §Faithfulness. |
 | `pnpm eval:faithfulness:calib` | The same, plus defect-injection calibration and judge-stability runs. What makes the score interpretable. |
