@@ -23,10 +23,11 @@ and the replacement is held to the same standard.
 - **Abstention — implemented, measured, and replaced.** Questions the corpus cannot answer are
   refused by an LLM judge that must **name** the article(s) answering the question; naming nothing
   means refusing. The previous design — a threshold on the top retrieval score — is still in the
-  tree as a pre-filter and a fallback, but it is no longer the mechanism: on the bge index it
-  refused 3 of 42 out-of-domain questions (13/42 on the current OpenAI index) and the signal
-  itself does not separate in-domain from out-of-domain questions. Both are documented with their numbers, including the one that limits
-  the new result — see §Abstention.
+  tree as a pre-filter and a fallback, but it is no longer the mechanism: on the current index it
+  refuses 13 of 42 out-of-domain questions (3/42 on the old bge index) and the signal itself does
+  not separate in-domain from out-of-domain questions. The judge refuses 41/42 with 0/32
+  in-domain false refusals; both are documented with their numbers, including the one that limits
+  the result — see §Abstention.
 - **Citation verification.** Every 第X条 the model cites is looked up in the store
   *numerically* — 「第577条」and「第五百七十七条」are the same article — and classified
   `verified`, `not_in_context` (a real article, but cited from memory rather than from what
@@ -122,11 +123,11 @@ that list: swapping it changes every score while the corpus fingerprint stays by
 so a report that omits it makes two incomparable numbers look like the same measurement.
 
 > **Measurement provenance (2026-11-17).** The table above is the `text-embedding-3-large`
-> index with the five `multi_law` cases added (dataset `025db9bed92e`). §Abstention and
-> §Faithfulness below were measured on the **previous** index *and* the 69-question dataset
-> (27 in-domain); they have not been re-run after either change, so their denominators and
-> contexts are both older than this table. §Reranking and the citation calibrations are from
-> the bge index too. The judge prompts and the citation checks themselves did not change.
+> index with the five `multi_law` cases added (dataset `025db9bed92e`). §Abstention has been
+> re-run on that index and dataset (74 questions / 32 in-domain). §Faithfulness, §Reranking and
+> the citation calibrations were measured on the previous `bge-base-zh-v1.5` index (some on the
+> 69-question dataset) and have **not** been re-run; their contexts and denominators are older
+> than this table. The judge prompts and the citation checks themselves did not change.
 
 ### The embedding model was chosen by measurement, not by preference
 
@@ -391,141 +392,110 @@ accepts. Building a hand-labelled precision set is the remaining piece of this m
 
 Everything above concludes that abstention cannot be a threshold on a similarity score. The
 replacement is one LLM call after retrieval, and it must **name** the article(s) that answer the
-question: a verdict the code cannot audit is not a verdict. 69 questions at the time, judge
-`gpt-4o`, judge prompt v2, corpus v2 (`39727cfdca37a660`), dataset `ddfa161d6775` (the dataset
-now has 74 questions / 32 in-domain; this section has not been re-run):
+question: a verdict the code cannot audit is not a verdict. 74 questions (32 in-domain), judge
+`gpt-4o`, prompt v2, corpus v2 (`39727cfdca37a660`), dataset `025db9bed92e`:
 
 | | judge-gated | similarity threshold alone |
 |---|---|---|
-| out-of-domain **refused** | **42/42 = 1.000** | 3/42 |
-| in-domain **falsely refused** | **0/27 = 0.000** | 0/27 |
-| — `legal_adjacent` (n=38) | 38/38 | |
+| out-of-domain **refused** | **41/42 = 0.976** | 13/42 |
+| in-domain **falsely refused** | **0/32 = 0.000** | 0/32 |
+| — `legal_adjacent` (n=38) | 37/38 | |
 | — `unrelated` (n=4) | 4/4 — n too small to conclude anything | |
 
-The two policies produce identical numbers, and that is itself the measurement: on this (bge)
-index the threshold abstained on **3** of the 42 out-of-domain questions and **none** of the 27
-in-domain ones, so `policy=sim` — the shipped rule that lets a similarity abstention override
-the judge — cost nothing here. **39 of the 42 were caught by the judge alone.** On the current
-OpenAI index the same threshold refuses 13/42 (0.310, retrieval table); these judge-gated rows
-have not been re-run since the switch.
+The two policies produce identical numbers: the threshold refuses 13 of the 42 out-of-domain
+questions and none of the 32 in-domain ones, so `policy=sim` costs nothing here — and the judge
+catches **28** that the threshold does not. The one miss is **`ood-28`** ("网购商品七天无理由退货
+的起算时间怎么算？", a 消费者权益保护法 question), accepted with 民法典#512 and #201 — the same
+question the smaller model accepted in the v1 stability run. It is a real false accept, not a
+formatting failure.
 
 | | |
 |---|---|
-| judge calls | 65 judged; 4 skipped by the deterministic rules (article lookups) |
+| judge calls | 70 judged; 4 skipped by the deterministic rules (article lookups) |
 | unusable verdicts | **0** — no parse failures, no API errors, no binding mismatches |
-| every named requirement was in the retrieved set | **26/26** entries, 0 binding mismatches |
-| the quoted text was found in the cited article | 23/23 answerable verdicts, all quotes found |
-| all named requirements match the answer key | **21/23** questions; 23/26 entries |
-| answerable questions that returned two requirements | **3** — `sem-01`, `sem-04`, `sem-20` |
-| cost per run | ~188k prompt + 5.5k completion tokens |
-| latency added before the first generated token | **not measured for v2**; v1 measured p50 **4.5 s** |
+| every named requirement was in the retrieved set | **37/37** entries, 0 binding mismatches |
+| quotes found verbatim | 25/29 answerable verdicts (4 quotes did not match — diagnostic only) |
+| all named requirements match the answer key | **23/28** questions; 30/35 entries |
+| answerable verdicts naming more than one requirement | **8/29** |
+| cost per run | 206k prompt + 6.3k completion tokens |
+| latency before the first generated token | p50 **1.4 s**, p95 1.8 s (70 uncached calls) |
 
-All 26/26 requirement entries were found in the retrieved set, and every one of the 23 answerable
-verdicts had its quotes found verbatim. That is what separates this from pattern-matching: a judge
-that had learned "the question mentions 刑法, refuse" would still have to read the articles to
-produce in-context, quote-verified names across 26 entries — and the prompt never shows it a
-score, so there is nothing else for it to key on.
+All 37/37 requirement entries were found in the retrieved set, and 25 of the 29 answerable
+verdicts quoted text that appears verbatim in the cited article. That is what separates this from
+pattern-matching: a judge that had learned "the question mentions 刑法, refuse" would still have
+to read the articles to produce in-context, quote-verified names across 37 entries — and the
+prompt never shows it a score, so there is nothing else for it to key on. The four mismatched
+quotes are all multi-requirement verdicts quoting a summary rather than a sentence; they are
+reported, not silently accepted, and they do not flip the verdict.
 
 The two questions the mechanism was designed around, in the judge's own words:
 
 - **`sem-02`** — "不满八周岁的孩子自己签的合同有效吗？", whose correct article 第二十条 is
   retrieved at rank 4 and scores lowest in the corpus on the cross-encoder (0.298). **Not
-  refused.** Named 民法典第二十条, the answer key. *"第二十条规定不满八周岁的未成年人为无民事
-  行为能力人，其独立签订合同须由法定代理人代理。"*
+  refused.** Named 民法典第二十条, the answer key.
 - **`ood-11`** — "正当防卫明显超过必要限度造成损害的，要负刑事责任吗？", near-verbatim with
   民法典第181条 and the highest-scoring out-of-domain question of all 42. **Refused.** *"检索到的
   最接近条文是民法典第181条，但它分配的是民事责任；问题问的是刑事责任。"*
 
-**The precision proxy now counts requirements, not questions.** §Faithfulness closes by saying a
-hand-labelled precision set is the missing foundation for any judge score. Forced naming supplies
-a free one — every in-domain question has a known answer, so each named requirement either matches
-it or does not. v2 changes the denominator: **23 of 26 requirement entries match the key, and 21 of
-23 questions have every requirement matching** (v1's 22/23 counted one article per question; the
-two statistics are not comparable). The three misses are worth reading rather than counting:
+**The one miss, and the score gate that would catch it.** The plan after v1 was to sweep a
+threshold on the named article's *retrieval* score, so the curve would come from a measured
+quantity rather than the judge's self-reported confidence. On this run a strictly better point
+exists: **t = 0.435 refuses 42/42 out-of-domain with 0/32 in-domain false refusals**. `ood-28`'s
+named score sits below it, and the lowest accepted in-domain score is 0.4406 — a **0.006** margin
+on a single sample. The gate is therefore **not shipped**: the earlier evidence that false accepts
+look like *high* scores (`ood-11` scores at the top of the distribution) still stands, and one
+sample does not overturn it. What is gone is the old claim that "every row of the sweep is worse
+than no gate" — that was measured on the previous index, where the only false accept was the
+high-scoring one.
 
-- `sem-01` names 第832条 (carrier liability) *and* 第606条 (risk passes to the buyer for goods sold
-  in transit) against the key's 第604条. Both are defensible readings of "burned in transit" —
-  §Limitations already calls 第832条 arguably the better one — so this is the answer key being
-  narrow rather than the judge being wrong.
-- `sem-04` ("协议离婚…要等多久才能拿到离婚证？") names 第1077条 (the 30-day cooling-off period, the
-  key) **and** 第1078条 (the registration office issues the certificate). 第1078条 states no
-  duration; this one is genuine over-listing.
-
-That last case is the cost of the conjunction: an over-listed requirement that is *not* retrieved
-would turn an answerable question into a `binding_mismatch` fallback. It did not happen in this run
-(0/27 false refusals), but the direction is real, and it is what to watch if the judge gets more
-liberal about what counts as necessary.
-
-**The score gate we planned to add is dominated, and it points the wrong way.** The plan was to
-sweep a threshold on the named article's *retrieval* score, so that the curve would come from a
-measured quantity rather than the judge's self-reported confidence. Measured, it cannot help: of
-the 23 accepted verdicts the weakest named article scores 0.561–0.863, and **zero** out-of-domain questions
-were accepted at all — so raising the gate can only turn correct in-domain answers into refusals.
-Every row of the sweep is worse than no gate. The failure it would insure against (a judge
-accepting a low-scoring article) did not occur once, and the one sample known to fool a similarity
-score, `ood-11`, scores at the *top* of the distribution: real false accepts look like high scores,
-not low ones. The gate is not shipped.
-
-**This is a perfect score, which is exactly what §Faithfulness taught us to distrust.**
+**This is not a perfect score, which is exactly what §Faithfulness taught us to distrust.**
 
 1. **The out-of-domain set is not a blind test.** The judge prompt enumerates the very laws these
-   42 questions come from — it was written from these failures. 42/42 measures that the judge
+   42 questions come from — it was written from these failures. 41/42 measures that the judge
    *applies the coverage rule it was given*, not that it recognises out-of-scope questions it was
-   never told about. The honest experiment is out-of-domain questions from laws the prompt does not
-   name.
+   never told about.
 2. **One prompt, one judge, temperature 0, one run.** There is no variance estimate. The only
-   stability handle is a different model; that run is below (2 disagreements, both over-acceptances).
-3. **The fallback was exercised zero times.** 65/65 calls returned a usable verdict — the good
+   stability handle is a different model, below.
+3. **The fallback was exercised zero times.** 70/70 calls returned a usable verdict — the good
    outcome — but it means the network-failure and parse-failure branches are covered by unit tests
-   only and have never fired on real data. A safety net that has never caught anything is untested
-   in the way that matters.
+   only and have never fired on real data.
 4. **`unrelated` is n=4.** Its 4/4 is noise; the result rests on the 38 `legal_adjacent` questions.
-5. **Latency is a product cost, not a footnote.** v1 measured 4.5 s median added to every question
-   that reaches stage 2, and stage 1 skips only 4 of 69. v2's prompt is longer, so the number is
-   probably higher — and it is **unmeasured**, which is not the same as unchanged.
+5. **Latency is a product cost, not a footnote.** 1.4 s median here, 4.5 s in the previous run —
+   the difference is the endpoint, not a change to the system, and it is reported per run rather
+   than assumed.
 
 **The judge's identity is worth two questions out of 42.** `--judge-model-b=gpt-4o-mini` on the
-v2 prompt: 64 comparable verdicts, **2 disagreements (0.031)**, and both are over-acceptances rather
-than false refusals — `ood-28` ("网购商品七天无理由退货的起算时间怎么算？", a 消费者权益保护法
-question) and `ood-33` ("内幕交易要承担什么法律责任？", a 证券法 question) are refused by `gpt-4o`
-and accepted by `gpt-4o-mini`. Out-of-domain refusal goes 42/42 → **40/42**; in-domain false
-refusals stay 0/27. Both flips point in the direction this mechanism exists to prevent. (v1 had one
-such flip; the schema change did not make the smaller model more conservative.) Per-token cost is
-identical because the prompt is identical; `gpt-4o-mini`'s latency on this run was p50 **2.5 s** /
-p95 4.2 s, while `gpt-4o`'s is unmeasured because its calls came from the cache.
+same 74 questions: 70 comparable verdicts, **2 disagreements (0.029)**, both over-acceptances —
+`ood-30` and `ood-33` are refused by `gpt-4o` and accepted by `gpt-4o-mini`. Out-of-domain refusal
+goes 41/42 → **39/42**; in-domain false refusals stay 0/32. `gpt-4o-mini`'s latency on this run was
+p50 **2.1 s** / p95 3.8 s, while `gpt-4o`'s is unmeasured because its calls came from the cache.
+
+**The precision proxy now counts requirements.** 30 of 35 requirement entries match the key, and
+23 of 28 questions have every requirement matching. The five misses:
+
+- `sem-01` names 第607条 against the key's 第604条 — the known ambiguous case from §Limitations.
+- `sem-04` adds 第1078条 (registration/certificate) to the key's 第1077条 (the 30-day period).
+- `sem-16` names 第499条 and 第317条, while the key lists only 第499条.
+- `multi-03` (越权担保) names 公司法#11 and #15 but not 民法典#504 — it answers the resolution
+  question and misses the "representative acted beyond authority" rule.
+- `multi-04` (决议撤销) names 公司法#28 (cancelling the registration) instead of 民法典#85 (the
+  bona fide counterparty rule) — a genuine precision miss on the new case.
+
+The last two are on the new multi-law cases; they are the kind of thing a hand-labelled precision
+set would catch systematically, and they are reported rather than tuned away.
 
 **How to reproduce, and what it will not reproduce.** Cold cache: `pnpm eval:abstention
---judge-model-b=gpt-4o-mini`, about $0.5 and twelve minutes. Warm cache: the same command, free and
-under two minutes, except that **latency is then not measured** — the script prints "未测" rather
-than a 0 ms it did not observe. The judge cache lives in `cache/answerability-judge.json`, keyed on
-`sha1(model, promptVersion, question, context)`, so bumping the prompt version invalidates every
-entry and re-prices the run.
+--judge-model-b=gpt-4o-mini`, about $0.6 and twelve minutes. Warm cache: the same command, free
+and under two minutes, except that **latency is then not measured** — the script prints "未测"
+rather than a 0 ms it did not observe. The judge cache lives in `cache/answerability-judge.json`,
+keyed on `sha1(model, promptVersion, question, context)`, so bumping the prompt version invalidates
+every entry and re-prices the run.
 
 **v2 (multi-requirement) is measured, and the numbers above are its numbers.** The judge returns
 `requirements: [{law, articleNo, quote}]` and `crossCheckAnswerability` requires all of them, so a
-multi-law answer that retrieved only half its material can no longer pass as answerable. The
-headline did not move — 42/42 out of domain, 0/27 false refusals, 0 unusable verdicts out of 65
-calls — and **3 of the 23 answerable questions returned two requirements**, including `sem-20`'s
-公司法#11 + 民法典#61, the cross-law case the schema exists for. Old v1 JSON still parses as a
-single requirement, so older reports replay.
-
-One thing is still v1 and labelled as such above: the `gpt-4o` latency sample. The model-B stability
-run has been repeated for v2 (below). The v2 cold run lost its timings to a report-formatting crash
-*after* every judge call had returned — the cache survived, so the rerun was free but by definition
-produced no latency samples. The v2 prompt is ~35% longer (3,589 vs 2,655 characters) and the cold
-run spent **188k prompt + 5.5k completion tokens**.
-
-**A judge-driven second pass, only when the judge names a missing law.** If the judge refuses and
-its `missing`/`reason` names an in-corpus law that retrieved nothing — or it names a requirement
-that is not in context — `runQuery` retrieves up to two articles **within that law**, re-judges
-once, and keeps the second verdict only if it is usable. It is not a general query decomposition:
-the trigger is the judge's own statement of what is missing, the pass is capped at two laws and
-two articles each, and a second refusal stands. Constructed check (`pnpm eval:secondary`, two
-judge calls): take `sem-20`, delete the 民法典 chunks, and the first verdict refuses ("缺少民法典
-关于法定代表人的规定"); the pass adds 民法典#62/#61 and the second verdict is answerable with
-requirements 公司法#11 + 民法典#61 — 5.4k prompt + 233 completion tokens. It **does not fire on
-the 69-question set** (0 in-domain refusals), so this is a measured mechanism with n=1, not a
-measured improvement; the same caveat applies as everywhere else in this section.
+multi-law answer that retrieved only half its material can no longer pass as answerable. **8 of
+the 29 answerable verdicts named two requirements** (up from 3 on the previous 27-question run).
+Old v1 JSON still parses as a single requirement.
 
 ### Gating a build on it
 
@@ -655,7 +625,7 @@ EMBEDDING_MODEL=text-embedding-3-large
 | `QUERY_REWRITE_MODEL` | `gpt-4o-mini` | Rewriter model, separate from the chat/judge models so caches do not collide. |
 | `QUERY_REWRITE_TIMEOUT_MS` | `8000` | Per-attempt timeout; failure falls back to the original retrieval. |
 | `QUERY_REWRITE_PROMPT_VERSION` | `1` | Loads `prompts/query-rewrite.v<N>.md`. |
-| `RETRIEVAL_SCORE_THRESHOLD` | `0.35` | Below this (with no exact article-number hit) the query abstains. It is **not** the abstention mechanism — it refuses 3 of 42 out-of-domain questions and no in-domain ones, so it only filters obvious off-topic queries. Its two remaining jobs are (a) a free pre-filter that skips the judge on clear misses, and (b) the fallback when the judge fails. See §Abstention. |
+| `RETRIEVAL_SCORE_THRESHOLD` | `0.35` | Below this (with no exact article-number hit) the query abstains. It is **not** the abstention mechanism — it refuses 13 of 42 out-of-domain questions on the current index (3/42 on bge) and no in-domain ones, so it only filters obvious off-topic queries. Its two remaining jobs are (a) a free pre-filter that skips the judge on clear misses, and (b) the fallback when the judge fails. See §Abstention. |
 | `PROMPT_VERSION` | `3` | Loads `prompts/legal-system-prompt.v<N>.md`. |
 | `EMBEDDING_TIMEOUT_MS` | `30000` | Per-request timeout. Without it, a stalled `fetch` hangs for undici's 300 s default. |
 | `EMBEDDING_MAX_ATTEMPTS` | `3` | Attempts for transient network failures (ECONNRESET and friends) only. |
@@ -969,12 +939,13 @@ retrieved colloquial match. One model, two different jobs, and it is only good a
   Deliberately deprioritised: recall has no headroom left (hit@5 = 1.000), so a fusion stage
   would be unmeasurable here. A cross-encoder reranker was implemented instead, because the
   remaining errors are ranking errors — see §Reranking.
-- **Abstention works, on a test set it was written against.** 42/42 out-of-domain refused, 0/27
-  in-domain falsely refused, zero unusable verdicts out of 65 calls — but the judge prompt
+- **Abstention works, on a test set it was written against.** 41/42 out-of-domain refused, 0/32
+  in-domain falsely refused, zero unusable verdicts out of 70 calls — but the judge prompt
   enumerates the laws the out-of-domain questions come from, so this measures that it applies the
   coverage rule it was given, not that it generalises to laws nobody listed. It is also a single
-  prompt and a single judge at temperature 0 with no variance estimate, it added **4.5 s** (v1) of median
-  latency to every question that reaches it, and its fallback path has never fired on real data.
+  prompt and a single judge at temperature 0 with no variance estimate, it added **1.4 s** of
+  median latency on this run (4.5 s on the previous one), and its fallback path has never fired
+  on real data.
   The previous version of this bullet said abstention never fired at all; that was true of the
   similarity threshold, which is now only a pre-filter and a fallback. See §Abstention.
 - **One question is arguably mis-keyed**, `sem-01` ("网上买的东西在快递途中被烧毁了，
